@@ -3,35 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเบิกจ่ายยา - Requisition</title>
+    <title>ระบบเบิกจ่ายและรับเข้ายา (พร้อมแจ้งเตือน)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
         .table-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        /* การจัด Header และ Body ให้ตรงกันเป๊ะ */
+        /* การจัด Alignment ตารางให้เป๊ะ */
         .table thead th { background-color: #0d6efd; color: white; border: none; text-align: center; }
         .table td { vertical-align: middle; text-align: center; border-bottom: 1px solid #dee2e6; }
         .drug-name { text-align: left !important; font-weight: bold; }
-        .status-low { color: #dc3545; font-weight: bold; }
+        .status-danger { color: #dc3545; font-weight: bold; }
+        .alert-box { display: none; } /* ซ่อนไว้ก่อน จะโชว์เมื่อมีแจ้งเตือน */
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="mb-4">รายการใบเบิกยา (Requisition List)</h2>
+    <div class="container mt-4">
+        
+        <div id="alert-dashboard" class="alert alert-warning alert-box shadow-sm mb-4" role="alert">
+            <h5 class="alert-heading fw-bold">⚠️ การแจ้งเตือนคลังยา</h5>
+            <ul id="alert-list" class="mb-0"></ul>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>รายการคลังยา (Inventory)</h2>
+            <button class="btn btn-warning fw-bold" onclick="openReceiveModal()">+ รับยาเข้าคลัง</button>
+        </div>
         
         <div class="table-container">
             <table class="table table-hover">
                 <thead>
                     <tr>
                         <th style="width: 10%;">รหัสยา</th>
-                        <th style="width: 40%;">ชื่อยา</th>
-                        <th style="width: 15%;">คงเหลือ</th>
+                        <th style="width: 35%;">ชื่อยา</th>
+                        <th style="width: 20%;">สถานะคลัง (คงเหลือ)</th>
                         <th style="width: 15%;">หน่วย</th>
                         <th style="width: 20%;">ดำเนินการ</th>
                     </tr>
                 </thead>
                 <tbody id="drug-list">
-                    </tbody>
+                    <tr><td colspan="5">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -46,7 +57,6 @@
                 <div class="modal-body">
                     <h6 id="modalDrugName" class="text-primary fw-bold mb-3"></h6>
                     <input type="hidden" id="modalDrugId">
-                    
                     <div class="mb-3">
                         <label class="form-label">วอร์ดที่เบิกปลายทาง</label>
                         <select class="form-select" id="modalWard">
@@ -63,92 +73,178 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="button" class="btn btn-success" onclick="submitDispense()">บันทึกการจ่ายยา</button>
+                    <button type="button" class="btn btn-primary" id="btn-dispense" onclick="submitDispense()">บันทึกการจ่ายยา</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="receiveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold">รับยาเข้าคลัง (Receive Stock)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">เลือกยาที่ต้องการรับเข้า</label>
+                        <select class="form-select" id="receiveDrugId"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">เลขที่ Lot (Lot Number)</label>
+                        <input type="text" class="form-control" id="receiveLot" placeholder="เช่น PARA-26C">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">วันหมดอายุ (Expiry Date)</label>
+                            <input type="date" class="form-control" id="receiveExpDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">จำนวนรับเข้า</label>
+                            <input type="number" class="form-control" id="receiveQty">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-warning fw-bold" id="btn-receive" onclick="submitReceive()">บันทึกรับเข้าคลัง</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // API URL ของคุณ (อัปเดตแล้ว)
         const API_URL = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec";
+        let globalDrugs = [];
 
         async function loadDrugs() {
-            const response = await fetch(API_URL);
-            const drugs = await response.json();
-            const list = document.getElementById('drug-list');
-            
-            list.innerHTML = drugs.map(drug => `
-                <tr>
-                    <td>${drug.internal_id}</td>
-                    <td class="drug-name">${drug.name} <br><small class="text-muted">${drug.trade_name || ''}</small></td>
-                    <td class="${drug.current_stock <= drug.rop ? 'status-low' : ''}">${drug.current_stock}</td>
-                    <td>${drug.unit}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="requestDrug('${drug.internal_id}', '${drug.name}')">เลือกเบิก</button>
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                const response = await fetch(API_URL);
+                globalDrugs = await response.json();
+                
+                const list = document.getElementById('drug-list');
+                const alertList = document.getElementById('alert-list');
+                const alertDashboard = document.getElementById('alert-dashboard');
+                
+                let html = '';
+                let alertHtml = '';
+
+                globalDrugs.forEach(drug => {
+                    // ตรวจสอบเงื่อนไขแจ้งเตือน
+                    let badges = '';
+                    let isStockLow = drug.current_stock <= drug.rop;
+                    let isExpiring = drug.expiring_qty > 0;
+
+                    if (isStockLow) {
+                        badges += `<br><span class="badge bg-danger mt-1">ต่ำกว่า ROP (จุดสั่งซื้อ ${drug.rop})</span>`;
+                        alertHtml += `<li><strong>${drug.name}</strong>: สต็อกคงเหลือ (${drug.current_stock}) ต่ำกว่าจุดสั่งซื้อ</li>`;
+                    }
+                    if (isExpiring) {
+                        badges += `<br><span class="badge bg-warning text-dark mt-1">มียาใกล้หมดอายุ ${drug.expiring_qty} ${drug.unit}</span>`;
+                        alertHtml += `<li><strong>${drug.name}</strong>: มียาล็อตใกล้หมดอายุ (ภายใน 6 เดือน) จำนวน ${drug.expiring_qty} ${drug.unit}</li>`;
+                    }
+
+                    html += `
+                        <tr>
+                            <td>${drug.internal_id}</td>
+                            <td class="drug-name">${drug.name} <br><small class="text-muted">${drug.trade_name || ''}</small></td>
+                            <td class="${isStockLow ? 'status-danger' : ''}">
+                                <span style="font-size: 1.1em;">${drug.current_stock}</span> ${badges}
+                            </td>
+                            <td>${drug.unit}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="requestDrug('${drug.internal_id}', '${drug.name}')">เลือกเบิก</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                list.innerHTML = html;
+
+                // แสดงแผงแจ้งเตือนถ้ามีปัญหา
+                if(alertHtml !== '') {
+                    alertList.innerHTML = alertHtml;
+                    alertDashboard.style.display = 'block';
+                } else {
+                    alertDashboard.style.display = 'none';
+                }
+
+            } catch (e) {
+                document.getElementById('drug-list').innerHTML = `<tr><td colspan="5" class="text-danger">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>`;
+            }
         }
 
-        // ฟังก์ชันเปิดป๊อปอัป
+        // ฟังก์ชันเปิดป๊อปอัปจ่ายยา
         function requestDrug(id, name) {
             document.getElementById('modalDrugId').value = id;
             document.getElementById('modalDrugName').innerText = id + " : " + name;
             document.getElementById('modalQty').value = '';
-            
-            var myModal = new bootstrap.Modal(document.getElementById('dispenseModal'));
-            myModal.show();
+            new bootstrap.Modal(document.getElementById('dispenseModal')).show();
         }
 
-        // ฟังก์ชันส่งข้อมูลไปตัดสต็อก
+        // ฟังก์ชันส่งข้อมูลจ่ายยา
         async function submitDispense() {
             const id = document.getElementById('modalDrugId').value;
             const qty = document.getElementById('modalQty').value;
             const ward = document.getElementById('modalWard').value;
             
-            if(!qty || qty <= 0) {
-                alert("กรุณาระบุจำนวนให้ถูกต้อง");
-                return;
-            }
+            if(!qty || qty <= 0) return alert("กรุณาระบุจำนวนให้ถูกต้อง");
 
-            const payload = {
-                internal_id: id,
-                qty: qty,
-                ward: ward,
-                user: "PHARMACY_STAFF_01" // จำลองรหัสเจ้าหน้าที่
-            };
-
-            // ปรับปุ่มให้แสดงสถานะกำลังโหลด
-            const btn = document.querySelector('.btn-success');
-            btn.innerHTML = 'กำลังบันทึก...';
-            btn.disabled = true;
+            const payload = { action: "dispense", internal_id: id, qty: qty, ward: ward, user: "PHARMACY_STAFF" };
+            const btn = document.getElementById('btn-dispense');
+            btn.innerHTML = 'กำลังบันทึก...'; btn.disabled = true;
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
-                
                 if(result.status === "success") {
                     alert("บันทึกการจ่ายยาและตัดสต็อกสำเร็จ!");
                     bootstrap.Modal.getInstance(document.getElementById('dispenseModal')).hide();
-                    loadDrugs(); // โหลดข้อมูลในตารางใหม่เพื่ออัปเดตยอดคงเหลือ
-                } else {
-                    alert("เกิดข้อผิดพลาด: " + result.message);
-                }
-            } catch (error) {
-                alert("เชื่อมต่อฐานข้อมูลล้มเหลว");
-            } finally {
-                btn.innerHTML = 'บันทึกการจ่ายยา';
-                btn.disabled = false;
-            }
+                    loadDrugs(); 
+                } else { alert("เกิดข้อผิดพลาด: " + result.message); }
+            } catch (e) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); } 
+            finally { btn.innerHTML = 'บันทึกการจ่ายยา'; btn.disabled = false; }
         }
 
+        // ฟังก์ชันเปิดป๊อปอัปรับยาเข้า
+        function openReceiveModal() {
+            const select = document.getElementById('receiveDrugId');
+            select.innerHTML = globalDrugs.map(d => `<option value="${d.internal_id}">${d.internal_id} - ${d.name}</option>`).join('');
+            
+            document.getElementById('receiveLot').value = '';
+            document.getElementById('receiveExpDate').value = '';
+            document.getElementById('receiveQty').value = '';
+            new bootstrap.Modal(document.getElementById('receiveModal')).show();
+        }
+
+        // ฟังก์ชันส่งข้อมูลรับยาเข้า
+        async function submitReceive() {
+            const id = document.getElementById('receiveDrugId').value;
+            const lot = document.getElementById('receiveLot').value;
+            const expDate = document.getElementById('receiveExpDate').value;
+            const qty = document.getElementById('receiveQty').value;
+            
+            if(!lot || !expDate || !qty || qty <= 0) return alert("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
+
+            const payload = { action: "receive", internal_id: id, lot_number: lot, expiry_date: expDate, qty: qty, user: "PHARMACY_STAFF" };
+            const btn = document.getElementById('btn-receive');
+            btn.innerHTML = 'กำลังบันทึก...'; btn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await response.json();
+                if(result.status === "success") {
+                    alert("รับยาเข้าคลังสำเร็จ!");
+                    bootstrap.Modal.getInstance(document.getElementById('receiveModal')).hide();
+                    loadDrugs(); 
+                } else { alert("เกิดข้อผิดพลาด"); }
+            } catch (e) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); } 
+            finally { btn.innerHTML = 'บันทึกรับเข้าคลัง'; btn.disabled = false; }
+        }
+
+        // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
         window.onload = loadDrugs;
     </script>
 </body>
