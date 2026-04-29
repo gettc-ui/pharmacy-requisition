@@ -36,8 +36,43 @@
         </div>
     </div>
 
+    <div class="modal fade" id="dispenseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">ยืนยันการจ่ายยา (Dispense)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 id="modalDrugName" class="text-primary fw-bold mb-3"></h6>
+                    <input type="hidden" id="modalDrugId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">วอร์ดที่เบิกปลายทาง</label>
+                        <select class="form-select" id="modalWard">
+                            <option value="OPD">ผู้ป่วยนอก (OPD)</option>
+                            <option value="ER">ฉุกเฉิน (ER)</option>
+                            <option value="Ward Med 1">อายุรกรรม 1</option>
+                            <option value="Ward Surg">ศัลยกรรม</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">จำนวนที่ต้องการจ่าย</label>
+                        <input type="number" class="form-control" id="modalQty" placeholder="ระบุจำนวน...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-success" onclick="submitDispense()">บันทึกการจ่ายยา</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // แทนที่ด้วย Web App URL ที่ได้จากขั้นตอนการ Deploy GAS
+        // API URL ของคุณ (อัปเดตแล้ว)
         const API_URL = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec";
 
         async function loadDrugs() {
@@ -52,10 +87,66 @@
                     <td class="${drug.current_stock <= drug.rop ? 'status-low' : ''}">${drug.current_stock}</td>
                     <td>${drug.unit}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="requestDrug('${drug.internal_id}')">เลือกเบิก</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="requestDrug('${drug.internal_id}', '${drug.name}')">เลือกเบิก</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // ฟังก์ชันเปิดป๊อปอัป
+        function requestDrug(id, name) {
+            document.getElementById('modalDrugId').value = id;
+            document.getElementById('modalDrugName').innerText = id + " : " + name;
+            document.getElementById('modalQty').value = '';
+            
+            var myModal = new bootstrap.Modal(document.getElementById('dispenseModal'));
+            myModal.show();
+        }
+
+        // ฟังก์ชันส่งข้อมูลไปตัดสต็อก
+        async function submitDispense() {
+            const id = document.getElementById('modalDrugId').value;
+            const qty = document.getElementById('modalQty').value;
+            const ward = document.getElementById('modalWard').value;
+            
+            if(!qty || qty <= 0) {
+                alert("กรุณาระบุจำนวนให้ถูกต้อง");
+                return;
+            }
+
+            const payload = {
+                internal_id: id,
+                qty: qty,
+                ward: ward,
+                user: "PHARMACY_STAFF_01" // จำลองรหัสเจ้าหน้าที่
+            };
+
+            // ปรับปุ่มให้แสดงสถานะกำลังโหลด
+            const btn = document.querySelector('.btn-success');
+            btn.innerHTML = 'กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if(result.status === "success") {
+                    alert("บันทึกการจ่ายยาและตัดสต็อกสำเร็จ!");
+                    bootstrap.Modal.getInstance(document.getElementById('dispenseModal')).hide();
+                    loadDrugs(); // โหลดข้อมูลในตารางใหม่เพื่ออัปเดตยอดคงเหลือ
+                } else {
+                    alert("เกิดข้อผิดพลาด: " + result.message);
+                }
+            } catch (error) {
+                alert("เชื่อมต่อฐานข้อมูลล้มเหลว");
+            } finally {
+                btn.innerHTML = 'บันทึกการจ่ายยา';
+                btn.disabled = false;
+            }
         }
 
         window.onload = loadDrugs;
