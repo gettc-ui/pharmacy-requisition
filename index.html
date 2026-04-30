@@ -55,7 +55,7 @@
                             <th style="width: 50px;"></th>
                         </tr>
                     </thead>
-                    <tbody><!-- เพิ่มแถวโดยกดปุ่มเท่านั้น --></tbody>
+                    <tbody></tbody>
                 </table>
             </div>
             <button class="btn btn-outline-primary btn-sm mb-4" onclick="addSupportRow()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
@@ -75,7 +75,7 @@
         </div>
 
         <div id="master-content">
-            <!-- ยาหลัก -->
+            <!-- 2.1 ยาหลัก -->
             <div id="m-generic" class="m-view">
                 <div class="card p-4">
                     <h5 class="fw-bold mb-4">ยาหลัก (Generic Master)</h5>
@@ -98,7 +98,7 @@
                     </form>
                 </div>
             </div>
-            <!-- ยี่ห้อ -->
+            <!-- 2.2 ยี่ห้อ -->
             <div id="m-trade" class="m-view" style="display:none;">
                 <div class="card p-4">
                     <h5 class="fw-bold mb-4">ชื่อการค้า (Trade Name)</h5>
@@ -114,7 +114,7 @@
                     </form>
                 </div>
             </div>
-            <!-- บริษัท -->
+            <!-- 2.3 บริษัท -->
             <div id="m-company" class="m-view" style="display:none;">
                 <div class="card p-4">
                     <h5 class="fw-bold mb-4">ข้อมูลบริษัท</h5>
@@ -128,7 +128,7 @@
                     </form>
                 </div>
             </div>
-            <!-- ผู้ใช้งาน -->
+            <!-- 2.4 ผู้ใช้งาน -->
             <div id="m-user" class="m-view" style="display:none;">
                 <div class="card p-4">
                     <h5 class="fw-bold mb-4">ผู้ใช้งาน</h5>
@@ -161,20 +161,45 @@
             const res = await fetch(API + "?page=init_data");
             db = await res.json();
             renderDropdowns();
-        } catch(e) { console.error("Data Load Error"); }
+        } catch(e) { console.error("Data Load Error", e); }
     }
 
     function renderDropdowns() {
-        const drugOpts = db.drugs.map(d => `<option value="${d.internal_id}">${d.generic_name} ${d.strength}</option>`).join('');
-        document.getElementById('sel-gen').innerHTML = drugOpts;
-        const compOpts = db.companies.map(c => `<option value="${c.manufact_id}">${c.company_name}</option>`).join('');
-        document.getElementById('sel-com').innerHTML = compOpts;
+        if (db.drugs && db.drugs.length > 0) {
+            const drugOpts = db.drugs.map(d => {
+                // ตรวจสอบชื่อ Key ให้ตรงกับที่ Sheet ส่งมา (กันพลาดเรื่องพิมพ์เล็ก-ใหญ่)
+                const name = d.generic_name || d.generic_Name || d.Generic_Name || "Unknown";
+                const strength = d.strength || d.Strength || "";
+                return `<option value="${d.internal_id || d.Internal_ID}">${name} ${strength}</option>`;
+            }).join('');
+            
+            const selGen = document.getElementById('sel-gen');
+            if (selGen) selGen.innerHTML = drugOpts;
+        }
+
+        if (db.companies && db.companies.length > 0) {
+            const compOpts = db.companies.map(c => 
+                `<option value="${c.manufact_id || c.Manufact_ID}">${c.company_name || c.Company_Name}</option>`
+            ).join('');
+            
+            const selCom = document.getElementById('sel-com');
+            if (selCom) selCom.innerHTML = compOpts;
+        }
     }
 
     function addSupportRow() {
-        if (db.drugs.length === 0) return alert("ยังไม่มีข้อมูลยาหลักในคลัง");
+        // ตรวจสอบ db.drugs อีกครั้งเผื่อข้อมูลยังไม่มา
+        if (!db.drugs || db.drugs.length === 0) {
+            return alert("ไม่มีข้อมูลยาหลักในระบบ กรุณาไปบันทึกข้อมูลหลักก่อนครับ");
+        }
+        
         const tbody = document.querySelector('#supportTable tbody');
-        const drugOpts = db.drugs.map(d => `<option value="${d.internal_id}">${d.generic_name} ${d.strength}</option>`).join('');
+        const drugOpts = db.drugs.map(d => {
+            const name = d.generic_name || d.generic_Name || d.Generic_Name || "Unknown";
+            const strength = d.strength || d.Strength || "";
+            return `<option value="${d.internal_id || d.Internal_ID}">${name} ${strength}</option>`;
+        }).join('');
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><select class="form-select">${drugOpts}</select></td>
@@ -191,6 +216,8 @@
         document.getElementById('page-' + tab).style.display = 'block';
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
+        // รีเฟรช Dropdown เผื่อมีการเพิ่มข้อมูลยาใหม่
+        renderDropdowns();
     }
 
     function switchMaster(sub, el) {
@@ -202,6 +229,7 @@
 
     function updateNelmSub(val) {
         const sel = document.getElementById('nelm-sub');
+        if (!sel) return;
         sel.innerHTML = '';
         let opts = (val === 'ED') ? ['b','s','ex','R1','R2'] : (val === 'NED' ? ['NED'] : (val === 'PS' ? ['PS'] : ['Other']));
         opts.forEach(o => sel.add(new Option(o, o)));
@@ -211,18 +239,26 @@
         e.preventDefault();
         const btn = e.target.querySelector('button');
         const oldTxt = btn.innerText;
-        btn.innerText = "Processing..."; btn.disabled = true;
-        const payload = Object.fromEntries(new FormData(e.target).entries());
+        btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+        
+        const formData = new FormData(e.target);
+        const payload = Object.fromEntries(formData.entries());
+
         try {
             const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
             const result = await res.json();
             if(result.status === 'success') {
-                alert("บันทึกสำเร็จ! เลขที่: " + result.new_id);
+                alert("บันทึกข้อมูลสำเร็จ! รหัสคือ: " + result.new_id);
                 e.target.reset();
-                initData();
+                await initData(); // โหลดข้อมูลใหม่เพื่อให้หน้าอื่นๆ เห็นข้อมูลที่เพิ่งบันทึก
+            } else {
+                alert("เกิดข้อผิดพลาด: " + result.message);
             }
-        } catch (err) { alert("Error: " + err); }
-        finally { btn.innerText = oldTxt; btn.disabled = false; }
+        } catch (err) { 
+            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง"); 
+        } finally { 
+            btn.innerText = oldTxt; btn.disabled = false; 
+        }
     }
 </script>
 </body>
