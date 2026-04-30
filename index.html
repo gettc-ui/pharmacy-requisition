@@ -1,3 +1,4 @@
+<!-- ก๊อปปี้ไปวางทับ index.html เดิมทั้งหมด -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -8,19 +9,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        :root { --prm: #2563eb; --bg: #f8fafc; }
+        :root { --prm: #2563eb; --bg: #f8fafc; --white: #ffffff; }
         body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); color: #1e293b; font-size: 14px; }
-        .navbar { background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .navbar { background: var(--white); border-bottom: 1px solid #e2e8f0; }
         .nav-link { color: #64748b; font-weight: 500; cursor: pointer; padding: 1rem; border-bottom: 2px solid transparent; }
         .nav-link.active { color: var(--prm); border-bottom-color: var(--prm); }
-        .card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .btn-prm { background: var(--prm); color: #fff; border-radius: 8px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--white); }
+        .btn-prm { background: var(--prm); color: var(--white); border-radius: 8px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
         .btn-prm:hover { background: #1d4ed8; transform: translateY(-1px); }
-        .btn-prm:disabled { background: #94a3b8; }
-        .form-label { font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 4px; }
-        .form-control:read-only { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; }
+        .form-label { font-weight: 600; color: #475569; font-size: 13px; }
+        .form-control:read-only { background-color: #f1f5f9; cursor: not-allowed; }
         .master-tab { cursor: pointer; padding: 10px 20px; border-radius: 10px; margin-right: 8px; background: #e2e8f0; font-weight: 600; transition: 0.2s; white-space: nowrap; }
-        .master-tab.active { background: var(--prm); color: #fff; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        .master-tab.active { background: var(--prm); color: var(--white); }
+        .table-custom thead th { background: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 12px; }
     </style>
 </head>
 <body>
@@ -29,21 +30,57 @@
     <div class="container">
         <a class="navbar-brand fw-bold text-primary" href="#"><i class="bi bi-capsule-pill"></i> PHARMACY V2</a>
         <div class="navbar-nav ms-auto">
+            <a class="nav-link" onclick="switchTab('procure', this)">สนับสนุน/รับยา</a>
             <a class="nav-link" onclick="switchTab('inventory', this)">คงคลัง</a>
             <a class="nav-link active" onclick="switchTab('master', this)">จัดการข้อมูลหลัก</a>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <div id="page-inventory" class="page-content" style="display:none;">
-        <div class="card p-5 text-center">
-            <i class="bi bi-box-seam display-1 text-muted mb-3"></i>
-            <h4>ระบบจัดการคงคลัง</h4>
-            <p class="text-muted">ส่วนนี้จะพร้อมใช้งานหลังจากที่คุณบันทึกข้อมูลหลัก (Master Data) เรียบร้อยแล้ว</p>
+<div class="container mt-4 pb-5">
+    <!-- 1. หน้าขอสนับสนุน/รับยา (New Feature Structure) -->
+    <div id="page-procure" class="page-content" style="display:none;">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-file-earmark-medical"></i> สร้างใบขอสนับสนุนยา</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="addSupportRow()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><label class="form-label">วันที่ขอ</label><input type="date" id="supDate" class="form-control"></div>
+                <div class="col-md-4"><label class="form-label">หน่วยงานเจ้าของเรื่อง</label><input type="text" id="supOwner" class="form-control" placeholder="ระบุหน่วยงาน"></div>
+                <div class="col-md-5"><label class="form-label">หน่วยงานปลายทาง</label><select id="supDest" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option><option>ห้องจ่ายยา รพ.แม่ข่าย</option></select></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-custom" id="supportTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">รายการยาสามัญ (Generic Name)</th>
+                            <th>คงคลัง</th>
+                            <th>ใช้/เดือน</th>
+                            <th>ขอสนับสนุน</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- แถวจะถูกเพิ่มที่นี่ -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <button class="btn btn-prm px-5" onclick="submitSupport()">ยืนยันใบขอสนับสนุน</button>
+            </div>
         </div>
     </div>
 
+    <!-- 2. หน้าคงคลัง -->
+    <div id="page-inventory" class="page-content" style="display:none;">
+        <div class="card p-5 text-center text-muted">
+            <i class="bi bi-box-seam display-1 mb-3"></i>
+            <h5>กำลังพัฒนาระบบสรุปยอดคงคลังแบบ Real-time</h5>
+        </div>
+    </div>
+
+    <!-- 3. หน้าจัดการข้อมูลหลัก -->
     <div id="page-master" class="page-content">
         <div class="d-flex mb-4 overflow-auto pb-2">
             <div class="master-tab active" onclick="switchMaster('generic', this)">1. ยาหลัก (Generic)</div>
@@ -53,93 +90,67 @@
         </div>
 
         <div id="master-content">
+            <!-- ยาหลัก -->
             <div id="m-generic" class="m-view">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-clipboard2-pulse"></i> เพิ่มรายการยาหลัก (Generic Master)</h5>
+                    <h5 class="fw-bold mb-4 text-primary">เพิ่มรายการยาหลัก</h5>
                     <form onsubmit="saveMaster(event, 'save_generic')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="รันอัตโนมัติ (DRG-xxxx)" readonly></div>
-                            <div class="col-md-6"><label class="form-label">ชื่อยาสามัญ (Generic Name)</label><input name="generic_name" class="form-control" required placeholder="ระบุชื่อยาสามัญ"></div>
-                            <div class="col-md-3"><label class="form-label">ความแรง (Strength)</label><input name="strength" class="form-control" required placeholder="เช่น 500 mg"></div>
-                            
-                            <div class="col-md-3"><label class="form-label">รูปแบบยา (Dosage Form)</label>
-                                <select name="dosage_form" class="form-select">
-                                    <option>Tablet</option><option>Capsule</option><option>Syrup</option>
-                                    <option>Injection</option><option>External</option><option>Suppository</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><label class="form-label">หน่วยนับ (Unit)</label><input name="unit" class="form-control" required placeholder="เม็ด / ขวด / แอมป์"></div>
-                            <div class="col-md-3"><label class="form-label">ประเภท (Drug Class)</label>
-                                <select name="drug_class" class="form-select">
-                                    <option>รพ.สต.</option><option>PCU</option><option>วัสดุเภสัชกรรม</option><option>อื่นๆ</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3"><label class="form-label">DMSIC Type</label>
-                                <select name="dmsic_type" class="form-select">
-                                    <option>ยาแผนปัจจุบัน (ตลาด)</option><option>ยาได้รับสนับสนุน</option><option>ยาผลิตเอง</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-3"><label class="form-label">บัญชียา (NELM Class)</label>
-                                <select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)">
-                                    <option value="ED">ED</option><option value="NED">NED</option><option value="PS">PS</option><option value="Other">Other</option>
-                                </select>
-                            </div>
+                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="รันอัตโนมัติ" readonly></div>
+                            <div class="col-md-6"><label class="form-label">ชื่อยาสามัญ (Generic Name)</label><input name="generic_name" class="form-control" required></div>
+                            <div class="col-md-3"><label class="form-label">ความแรง (Strength)</label><input name="strength" class="form-control" required></div>
+                            <div class="col-md-3"><label class="form-label">รูปแบบยา</label><select name="dosage_form" class="form-select"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option></select></div>
+                            <div class="col-md-3"><label class="form-label">หน่วยนับ</label><input name="unit" class="form-control" required></div>
+                            <div class="col-md-3"><label class="form-label">บัญชียา (NELM)</label><select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)"><option value="ED">ED</option><option value="NED">NED</option><option value="PS">PS</option></select></div>
                             <div class="col-md-3"><label class="form-label">NELM Subclass</label><select name="nelm_subclass" id="nelm-sub" class="form-select"></select></div>
-                            <div class="col-md-6"><label class="form-label">รหัส GPU</label><input name="gpu_code" class="form-control" maxlength="10" placeholder="รหัส GPU 10 หลัก"></div>
-                            
-                            <div class="col-md-3"><label class="form-label">จุดสั่งซื้อ (ROP)</label><input type="number" name="rop" class="form-control" value="0"></div>
-                            <div class="col-md-3"><label class="form-label">Safety Stock</label><input type="number" name="safety_stock" class="form-control" value="0"></div>
-                            
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm px-5">บันทึกยาหลัก</button></div>
+                            <div class="col-12 text-end mt-3"><button type="submit" class="btn btn-prm">บันทึกยาหลัก</button></div>
                         </div>
                     </form>
                 </div>
             </div>
-
+            <!-- ยี่ห้อ -->
             <div id="m-trade" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-tag"></i> ผูกชื่อทางการค้า (Trade Name)</h5>
+                    <h5 class="fw-bold mb-4 text-primary">ผูกชื่อยี่ห้อ</h5>
                     <form onsubmit="saveMaster(event, 'save_trade')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" placeholder="รันอัตโนมัติ (TRD-xxxx)" readonly></div>
-                            <div class="col-md-9"><label class="form-label">เลือกยาหลัก (Generic)</label><select name="internal_id" id="sel-gen" class="form-select" required></select></div>
-                            <div class="col-md-6"><label class="form-label">ชื่อทางการค้า (Trade Name)</label><input name="trade_name" class="form-control" required placeholder="ระบุยี่ห้อ"></div>
-                            <div class="col-md-3"><label class="form-label">บริษัทผู้ผลิต</label><select name="manufact_id" id="sel-com" class="form-select" required></select></div>
-                            <div class="col-md-3"><label class="form-label">รหัส TPU (TMT)</label><input name="tpu_code" class="form-control" placeholder="รหัส TPU 10 หลัก"></div>
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm px-5">บันทึกชื่อยี่ห้อ</button></div>
+                            <div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" placeholder="รันอัตโนมัติ" readonly></div>
+                            <div class="col-md-9"><label class="form-label">เลือกยาหลัก</label><select name="internal_id" id="sel-gen" class="form-select"></select></div>
+                            <div class="col-md-6"><label class="form-label">ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div>
+                            <div class="col-md-3"><label class="form-label">บริษัท</label><select name="manufact_id" id="sel-com" class="form-select"></select></div>
+                            <div class="col-md-3"><label class="form-label">รหัส TPU (TMT)</label><input name="tpu_code" class="form-control"></div>
+                            <div class="col-12 text-end mt-3"><button type="submit" class="btn btn-prm">บันทึกยี่ห้อ</button></div>
                         </div>
                     </form>
                 </div>
             </div>
-
+            <!-- บริษัท -->
             <div id="m-company" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-building"></i> จัดการบริษัท/ผู้จัดจำหน่าย</h5>
+                    <h5 class="fw-bold mb-4 text-primary">จัดการบริษัท</h5>
                     <form onsubmit="saveMaster(event, 'save_company')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" placeholder="รันอัตโนมัติ (COM-xxxx)" readonly></div>
-                            <div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required placeholder="ชื่อบริษัทเต็ม"></div>
-                            <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea name="note" class="form-control" rows="2"></textarea></div>
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm px-5">บันทึกบริษัท</button></div>
+                            <div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" placeholder="รันอัตโนมัติ" readonly></div>
+                            <div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required></div>
+                            <div class="col-12 text-end mt-3"><button type="submit" class="btn btn-prm">บันทึกบริษัท</button></div>
                         </div>
                     </form>
                 </div>
             </div>
-
+            <!-- ผู้ใช้ -->
             <div id="m-user" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-person-gear"></i> จัดการผู้ใช้งานระบบ</h5>
+                    <h5 class="fw-bold mb-4 text-primary">จัดการผู้ใช้งาน</h5>
                     <form onsubmit="saveMaster(event, 'save_user')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">เลขประจำตัว</label><input name="user_id" class="form-control" required></div>
+                            <div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" placeholder="รันอัตโนมัติ (USR-xxxx)" readonly></div>
                             <div class="col-md-5"><label class="form-label">ชื่อ-นามสกุล</label><input name="full_name" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">สิทธิ์การใช้งาน</label><select name="role" class="form-select"><option value="PHARMACIST">คลังยา (Pharmacist)</option><option value="NURSE">พยาบาล (Nurse)</option></select></div>
                             <div class="col-md-4"><label class="form-label">Username</label><input name="username" class="form-control" required></div>
                             <div class="col-md-4"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">หน่วยงาน/วอร์ด</label><input name="department" class="form-control" placeholder="เช่น ER, OPD"></div>
+                            <div class="col-md-4"><label class="form-label">สิทธิ์</label><select name="role" class="form-select"><option value="PHARMACIST">คลังยา</option><option value="NURSE">พยาบาล</option></select></div>
+                            <div class="col-md-4"><label class="form-label">วอร์ด/แผนก</label><input name="department" class="form-control" required></div>
                             <input type="hidden" name="status" value="ACTIVE">
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm px-5">เพิ่มผู้ใช้งาน</button></div>
+                            <div class="col-12 text-end mt-3"><button type="submit" class="btn btn-prm">เพิ่มผู้ใช้งาน</button></div>
                         </div>
                     </form>
                 </div>
@@ -149,36 +160,38 @@
 </div>
 
 <script>
-    // *** สำคัญ: นำ URL จาก Google Apps Script มาใส่ตรงนี้ ***
-    const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
-    
+    const API = "ใส่_URL_WEB_APP_ที่นี่"; 
     let db = { drugs:[], trades:[], companies:[], users:[] };
 
-    window.onload = () => { 
-        initData(); 
-        updateNelmSub('ED'); 
-    };
+    window.onload = () => { initData(); updateNelmSub('ED'); };
 
     async function initData() {
         try {
             const res = await fetch(API + "?page=init_data");
-            const text = await res.text();
-            db = JSON.parse(text);
+            db = await res.json();
             renderDropdowns();
-        } catch(e) { console.error("โหลดข้อมูลล้มเหลว", e); }
+        } catch(e) { console.error("Init Load Error"); }
     }
 
     function renderDropdowns() {
-        if(db.drugs) {
-            document.getElementById('sel-gen').innerHTML = db.drugs.map(d => 
-                `<option value="${d.internal_id}">${d.internal_id} | ${d.generic_name} ${d.strength}</option>`
-            ).join('');
-        }
-        if(db.companies) {
-            document.getElementById('sel-com').innerHTML = db.companies.map(c => 
-                `<option value="${c.manufact_id}">${c.company_name}</option>`
-            ).join('');
-        }
+        const drugOpts = db.drugs.map(d => `<option value="${d.internal_id}">${d.internal_id} | ${d.generic_name} ${d.strength}</option>`).join('');
+        document.getElementById('sel-gen').innerHTML = drugOpts;
+        document.getElementById('sel-com').innerHTML = db.companies.map(c => `<option value="${c.manufact_id}">${c.company_name}</option>`).join('');
+    }
+
+    // --- ระบบเพิ่มแถวใบขอสนับสนุน ---
+    function addSupportRow() {
+        const tbody = document.querySelector('#supportTable tbody');
+        const row = document.createElement('tr');
+        const drugOptions = db.drugs.map(d => `<option value="${d.internal_id}">${d.generic_name} ${d.strength}</option>`).join('');
+        row.innerHTML = `
+            <td><select class="form-select gen-select">${drugOptions}</select></td>
+            <td><input type="number" class="form-control cur-stock" value="0"></td>
+            <td><input type="number" class="form-control use-rate" value="0"></td>
+            <td><input type="number" class="form-control req-qty" value="0"></td>
+            <td><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
+        `;
+        tbody.appendChild(row);
     }
 
     function switchTab(tab, el) {
@@ -186,6 +199,7 @@
         document.getElementById('page-' + tab).style.display = 'block';
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
+        if(tab === 'procure' && document.querySelector('#supportTable tbody').rows.length === 0) addSupportRow();
     }
 
     function switchMaster(sub, el) {
@@ -198,12 +212,7 @@
     function updateNelmSub(val) {
         const sel = document.getElementById('nelm-sub');
         sel.innerHTML = '';
-        let opts = [];
-        if (val === 'ED') opts = ['b','s','ex','R1','R2'];
-        else if (val === 'NED') opts = ['NED'];
-        else if (val === 'PS') opts = ['PS'];
-        else opts = ['-'];
-        
+        const opts = (val === 'ED') ? ['b','s','ex','R1','R2'] : [val];
         opts.forEach(o => sel.add(new Option(o, o)));
     }
 
@@ -211,34 +220,18 @@
         e.preventDefault();
         const btn = e.target.querySelector('button');
         const oldTxt = btn.innerText;
-        btn.innerText = "กำลังประมวลผล..."; btn.disabled = true;
-
-        const formData = new FormData(e.target);
-        const payload = Object.fromEntries(formData.entries());
-
+        btn.innerText = "Saving..."; btn.disabled = true;
+        const payload = Object.fromEntries(new FormData(e.target).entries());
         try {
             const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
-            const text = await res.text();
-            
-            try {
-                const result = JSON.parse(text);
-                if(result.status === 'success') {
-                    alert("บันทึกสำเร็จ! เลขที่ออกคือ: " + result.new_id);
-                    e.target.reset();
-                    if(action === 'save_generic') updateNelmSub('ED');
-                    initData(); 
-                } else {
-                    alert("เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: " + result.message);
-                }
-            } catch(e) {
-                console.error("Response:", text);
-                alert("ได้รับข้อมูลผิดพลาด (ตรวจสอบการตั้งค่า Google Sheet ID และสิทธิ์การเข้าถึง)");
+            const result = await res.json();
+            if(result.status === 'success') {
+                alert("บันทึกสำเร็จ! เลขที่: " + result.new_id);
+                e.target.reset();
+                initData();
             }
-        } catch (err) { 
-            alert("ไม่สามารถเชื่อมต่อ Server ได้: " + err); 
-        } finally { 
-            btn.innerText = oldTxt; btn.disabled = false; 
-        }
+        } catch (err) { alert("Error: " + err); }
+        finally { btn.innerText = oldTxt; btn.disabled = false; }
     }
 </script>
 </body>
