@@ -18,8 +18,8 @@
         .btn-prm:hover { background: #1d4ed8; transform: translateY(-1px); }
         .form-label { font-weight: 600; color: #475569; font-size: 13px; }
         .form-control:read-only { background-color: #f1f5f9; cursor: not-allowed; }
-        .master-tab { cursor: pointer; padding: 10px 20px; border-radius: 10px; margin-right: 8px; background: #e2e8f0; font-weight: 600; transition: 0.2s; }
-        .master-tab.active { background: var(--prm); color: white; }
+        .master-tab, .procure-tab { cursor: pointer; padding: 10px 20px; border-radius: 10px; margin-right: 8px; background: #e2e8f0; font-weight: 600; transition: 0.2s; }
+        .master-tab.active, .procure-tab.active { background: var(--prm); color: white; }
     </style>
 </head>
 <body>
@@ -28,47 +28,91 @@
     <div class="container">
         <a class="navbar-brand fw-bold text-primary" href="#"><i class="bi bi-capsule-pill"></i> PHARMACY V2</a>
         <div class="navbar-nav ms-auto">
-            <a class="nav-link px-3" onclick="switchTab('procure', this)">สร้างใบขอสนับสนุน</a>
-            <a class="nav-link px-3 active" onclick="switchTab('master', this)">จัดการข้อมูลหลัก</a>
+            <a class="nav-link px-3 active" onclick="switchTab('procure', this)">สนับสนุน/รับยา</a>
+            <a class="nav-link px-3" onclick="switchTab('master', this)">จัดการข้อมูลหลัก</a>
         </div>
     </div>
 </nav>
 
 <div class="container mt-4 pb-5">
-    <!-- หน้าใบขอสนับสนุน -->
-    <div id="page-procure" class="page-content" style="display:none;">
-        <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา (Support Request)</h5>
-            <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="form-label">วันที่เอกสาร</label><input type="date" id="docDate" class="form-control"></div>
-                <div class="col-md-4"><label class="form-label">หน่วยงานเจ้าของเรื่อง</label><input type="text" id="docDept" class="form-control" placeholder="ระบุชื่อหน่วยงาน"></div>
-                <div class="col-md-5"><label class="form-label">ปลายทาง</label><select id="docDest" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option><option>ห้องจ่ายยา รพ.แม่ข่าย</option></select></div>
+    
+    <!-- กลุ่มหน้า จัดการการสนับสนุนและรับยา -->
+    <div id="page-procure" class="page-content">
+        <div class="d-flex mb-4 overflow-auto pb-2">
+            <div class="procure-tab active" onclick="switchProcure('request', this)">1. สร้างใบขอสนับสนุน</div>
+            <div class="procure-tab" onclick="switchProcure('receive', this)">2. รับยาเข้าคลัง (Receive)</div>
+        </div>
+
+        <!-- หน้า 1: สร้างใบขอสนับสนุน -->
+        <div id="p-request" class="p-view">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4"><label class="form-label">หน่วยงานที่ขอ</label><input type="text" id="docDept" class="form-control" placeholder="ระบุชื่อหน่วยงาน"></div>
+                    <div class="col-md-4"><label class="form-label">ขอไปยัง</label><select id="docDest" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option><option>ห้องจ่ายยา รพ.แม่ข่าย</option></select></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="supportTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 45%;">รายการยาสามัญ</th>
+                                <th>คงคลัง</th>
+                                <th>ใช้/เดือน</th>
+                                <th>จำนวนที่ขอ</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline-primary btn-sm mb-4" onclick="addSupportRow()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
+                <div class="text-end border-top pt-3">
+                    <button class="btn btn-prm px-5" id="btnSubmitSupport" onclick="submitSupport()">ยืนยันใบขอสนับสนุน</button>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle" id="supportTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 45%;">รายการยาสามัญ (Generic Name)</th>
-                            <th>คงคลังปัจจุบัน</th>
-                            <th>ใช้/เดือน</th>
-                            <th>จำนวนขอสนับสนุน</th>
-                            <th style="width: 50px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- แถวข้อมูลจะว่างเปล่า จนกว่าจะกดปุ่มเพิ่ม -->
-                    </tbody>
-                </table>
-            </div>
-            <button class="btn btn-outline-primary btn-sm mb-4" onclick="addSupportRow()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
-            <div class="text-end border-top pt-3">
-                <button class="btn btn-prm px-5" id="btnSubmitSupport" onclick="submitSupport()">ยืนยันบันทึกใบขอสนับสนุน</button>
+        </div>
+
+        <!-- หน้า 2: รับยาเข้าคลัง (ระบบรับบางส่วน Partial Receive) -->
+        <div id="p-receive" class="p-view" style="display:none;">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-4 text-success"><i class="bi bi-box-arrow-in-down"></i> รับยาเข้าคลัง</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-8">
+                        <label class="form-label text-danger">เลือกใบขอสนับสนุนที่รอรับยาเข้าคลัง</label>
+                        <div class="input-group">
+                            <select id="searchSupNo" class="form-select border-danger">
+                                <option value="">-- โหลดข้อมูล... --</option>
+                            </select>
+                            <button class="btn btn-danger" onclick="searchSupportDoc()"><i class="bi bi-cloud-arrow-down"></i> ดึงรายการยา</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="receiveTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 25%;">รายการยาสามัญ</th>
+                                <th style="width: 10%;">ขอไป</th>
+                                <th style="width: 10%;">รับแล้ว</th>
+                                <th style="width: 15%;">รับครั้งนี้</th>
+                                <th style="width: 20%;">Lot No.</th>
+                                <th style="width: 20%;">วันหมดอายุ (Exp.)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="6" class="text-center text-muted">กรุณาเลือกใบขอสนับสนุนแล้วกด "ดึงรายการยา"</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end border-top pt-3">
+                    <button class="btn btn-success px-5" id="btnSubmitReceive" onclick="submitReceive()" disabled>ยืนยันรับยาเข้าคลัง</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- หน้าจัดการข้อมูลหลัก -->
-    <div id="page-master" class="page-content">
+    <div id="page-master" class="page-content" style="display:none;">
         <div class="d-flex mb-4 overflow-auto pb-2">
             <div class="master-tab active" onclick="switchMaster('generic', this)">1. ยาหลัก (Generic)</div>
             <div class="master-tab" onclick="switchMaster('trade', this)">2. ยี่ห้อ (Trade Name)</div>
@@ -77,22 +121,22 @@
         </div>
 
         <div id="master-content">
-            <!-- 2.1 ยาหลัก -->
+            <!-- ยาหลัก -->
             <div id="m-generic" class="m-view">
                 <div class="card p-4">
                     <h5 class="fw-bold mb-4 text-primary">ยาหลัก (Generic Master)</h5>
                     <form onsubmit="saveMaster(event, 'save_generic')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="รัน DRG-xxxx อัตโนมัติ" readonly></div>
+                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="รันอัตโนมัติ" readonly></div>
                             <div class="col-md-6"><label class="form-label">ชื่อยาสามัญ</label><input name="generic_name" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">ความแรง</label><input name="strength" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">รูปแบบยา</label><select name="dosage_form" class="form-select"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option></select></div>
                             <div class="col-md-3"><label class="form-label">หน่วยนับ</label><input name="unit" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">ประเภท</label><select name="drug_class" class="form-select"><option>รพ.สต.</option><option>PCU</option><option>วัสดุเภสัชกรรม</option></select></div>
-                            <div class="col-md-3"><label class="form-label">DMSIC Type</label><select name="dmsic_type" class="form-select"><option>ยาแผนปัจจุบัน (ตลาด)</option><option>ยาได้รับสนับสนุน</option><option>ยาผลิตเอง</option></select></div>
-                            <div class="col-md-3"><label class="form-label">NELM Class</label><select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)"><option value="ED">ED</option><option value="NED">NED</option><option value="PS">PS</option></select></div>
+                            <div class="col-md-3"><label class="form-label">DMSIC Type</label><select name="dmsic_type" class="form-select"><option>ยาแผนปัจจุบัน</option><option>ยาได้รับสนับสนุน</option></select></div>
+                            <div class="col-md-3"><label class="form-label">NELM Class</label><select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)"><option value="ED">ED</option><option value="NED">NED</option></select></div>
                             <div class="col-md-3"><label class="form-label">NELM Sub</label><select name="nelm_subclass" id="nelm-sub" class="form-select"></select></div>
-                            <div class="col-md-6"><label class="form-label">GPU Code</label><input name="gpu_code" class="form-control" maxlength="10"></div>
+                            <div class="col-md-6"><label class="form-label">GPU Code</label><input name="gpu_code" class="form-control"></div>
                             <div class="col-md-3"><label class="form-label">ROP</label><input type="number" name="rop" class="form-control" value="0"></div>
                             <div class="col-md-3"><label class="form-label">Safety Stock</label><input type="number" name="safety_stock" class="form-control" value="0"></div>
                             <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm">บันทึกยาหลัก</button></div>
@@ -100,119 +144,76 @@
                     </form>
                 </div>
             </div>
-            <!-- 2.2 ยี่ห้อ -->
-            <div id="m-trade" class="m-view" style="display:none;">
-                <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary">ชื่อการค้า (Trade Name)</h5>
-                    <form onsubmit="saveMaster(event, 'save_trade')">
-                        <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" placeholder="รัน TRD-xxxx อัตโนมัติ" readonly></div>
-                            <div class="col-md-9"><label class="form-label">เลือกยาหลัก</label><select name="internal_id" id="sel-gen" class="form-select" required></select></div>
-                            <div class="col-md-6"><label class="form-label">ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div>
-                            <div class="col-md-3"><label class="form-label">TPU Code</label><input name="tpu_code" class="form-control" maxlength="10"></div>
-                            <div class="col-md-3"><label class="form-label">บริษัท</label><select name="manufact_id" id="sel-com" class="form-select" required></select></div>
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm">บันทึกยี่ห้อ</button></div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <!-- 2.3 บริษัท -->
-            <div id="m-company" class="m-view" style="display:none;">
-                <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary">ข้อมูลบริษัท</h5>
-                    <form onsubmit="saveMaster(event, 'save_company')">
-                        <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" placeholder="รัน COM-xxxx อัตโนมัติ" readonly></div>
-                            <div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required></div>
-                            <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea name="note" class="form-control" rows="2"></textarea></div>
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm">บันทึกบริษัท</button></div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <!-- 2.4 ผู้ใช้งาน -->
-            <div id="m-user" class="m-view" style="display:none;">
-                <div class="card p-4">
-                    <h5 class="fw-bold mb-4 text-primary">ผู้ใช้งาน</h5>
-                    <form onsubmit="saveMaster(event, 'save_user')">
-                        <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" placeholder="รัน USR-xxxx อัตโนมัติ" readonly></div>
-                            <div class="col-md-5"><label class="form-label">ชื่อ-นามสกุล</label><input name="full_name" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">หน่วยงาน</label><input name="department" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">Username</label><input name="username" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
-                            <div class="col-md-4"><label class="form-label">สิทธิ์</label><select name="role" class="form-select"><option value="PHARMACIST">คลังยา</option><option value="NURSE">พยาบาล</option></select></div>
-                            <input type="hidden" name="status" value="ACTIVE">
-                            <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm">สร้างผู้ใช้งาน</button></div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            <!-- ยี่ห้อ, บริษัท, ผู้ใช้ โครงสร้างเดิม -->
+            <div id="m-trade" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">ชื่อการค้า</h5><form onsubmit="saveMaster(event, 'save_trade')"><div class="row g-3"><div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" readonly></div><div class="col-md-9"><label class="form-label">ยาหลัก</label><select name="internal_id" id="sel-gen" class="form-select" required></select></div><div class="col-md-6"><label class="form-label">ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div><div class="col-md-3"><label class="form-label">TPU</label><input name="tpu_code" class="form-control"></div><div class="col-md-3"><label class="form-label">บริษัท</label><select name="manufact_id" id="sel-com" class="form-select" required></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
+            <div id="m-company" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">บริษัท</h5><form onsubmit="saveMaster(event, 'save_company')"><div class="row g-3"><div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" readonly></div><div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
+            <div id="m-user" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">ผู้ใช้งาน</h5><form onsubmit="saveMaster(event, 'save_user')"><div class="row g-3"><div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" readonly></div><div class="col-md-5"><label class="form-label">ชื่อ</label><input name="full_name" class="form-control" required></div><div class="col-md-4"><label class="form-label">Username</label><input name="username" class="form-control" required></div><div class="col-md-4"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div><div class="col-md-4"><label class="form-label">สิทธิ์</label><select name="role" class="form-select"><option value="PHARMACIST">คลังยา</option></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    // *** สำคัญ: นำ URL ของ Apps Script ล่าสุดมาวางที่นี่ ***
+    // *** สำคัญ: นำ URL ของ Apps Script มาวางที่นี่ ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
     
     let db = { drugs:[], trades:[], companies:[], users:[] };
 
-    window.onload = () => { 
-        document.getElementById('docDate').valueAsDate = new Date();
-        initData(); 
-        updateNelmSub('ED'); 
-    };
+    window.onload = () => { initData(); updateNelmSub('ED'); };
 
     async function initData() {
         try {
             const res = await fetch(API + "?page=init_data");
             db = await res.json();
             renderDropdowns();
-        } catch(e) { console.error("Data Load Error", e); }
+        } catch(e) { console.error("Data Load Error"); }
     }
 
     function renderDropdowns() {
         if (db.drugs && db.drugs.length > 0) {
-            const drugOpts = db.drugs.map(d => {
-                const name = d.generic_name || d.generic_Name || d.Generic_Name || "Unknown";
-                const strength = d.strength || d.Strength || "";
-                return `<option value="${d.internal_id || d.Internal_ID}">${name} ${strength}</option>`;
-            }).join('');
+            const drugOpts = db.drugs.map(d => `<option value="${d.internal_id || d.Internal_ID}">${d.generic_name || d.generic_Name} ${d.strength || ""}</option>`).join('');
             const selGen = document.getElementById('sel-gen');
             if (selGen) selGen.innerHTML = drugOpts;
         }
-
         if (db.companies && db.companies.length > 0) {
-            const compOpts = db.companies.map(c => 
-                `<option value="${c.manufact_id || c.Manufact_ID}">${c.company_name || c.Company_Name}</option>`
-            ).join('');
+            const compOpts = db.companies.map(c => `<option value="${c.manufact_id || c.Manufact_ID}">${c.company_name || c.Company_Name}</option>`).join('');
             const selCom = document.getElementById('sel-com');
             if (selCom) selCom.innerHTML = compOpts;
         }
     }
 
-    // --- ส่วนของใบขอสนับสนุน ---
-    function addSupportRow() {
-        if (!db.drugs || db.drugs.length === 0) {
-            return alert("ไม่มีข้อมูลยาหลักในระบบ กรุณาบันทึกข้อมูลหลักก่อนครับ");
-        }
+    // --- Tab Controllers ---
+    function switchTab(tab, el) {
+        document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+        document.getElementById('page-' + tab).style.display = 'block';
+        document.querySelectorAll('.navbar .nav-link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function switchMaster(sub, el) {
+        document.querySelectorAll('.m-view').forEach(v => v.style.display = 'none');
+        document.getElementById('m-' + sub).style.display = 'block';
+        document.querySelectorAll('.master-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function switchProcure(sub, el) {
+        document.querySelectorAll('.p-view').forEach(v => v.style.display = 'none');
+        document.getElementById('p-' + sub).style.display = 'block';
+        document.querySelectorAll('.procure-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
         
+        if(sub === 'receive') loadPendingSupports();
+    }
+
+    // --- 1. สนับสนุนยา ---
+    function addSupportRow() {
+        if (!db.drugs || db.drugs.length === 0) return alert("ยังไม่มีข้อมูลยาหลัก");
         const tbody = document.querySelector('#supportTable tbody');
-        const drugOpts = db.drugs.map(d => {
-            const name = d.generic_name || d.generic_Name || d.Generic_Name || "Unknown";
-            const strength = d.strength || d.Strength || "";
-            return `<option value="${d.internal_id || d.Internal_ID}">${name} ${strength}</option>`;
-        }).join('');
+        const drugOpts = db.drugs.map(d => `<option value="${d.internal_id || d.Internal_ID}">${d.generic_name || d.generic_Name} ${d.strength || ""}</option>`).join('');
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>
-                <select class="form-select drug-select" onchange="updateRowStats(this)">
-                    <option value="">-- เลือกรายการยา --</option>
-                    ${drugOpts}
-                </select>
-            </td>
+            <td><select class="form-select drug-select" onchange="updateRowStats(this)"><option value="">-- เลือกรายการยา --</option>${drugOpts}</select></td>
             <td><input type="number" class="form-control stock-field" value="0" readonly></td>
             <td><input type="number" class="form-control usage-field" value="0" readonly></td>
             <td><input type="number" class="form-control req-field" value="0" min="1"></td>
@@ -224,130 +225,155 @@
     async function updateRowStats(selectEl) {
         const internalId = selectEl.value;
         const row = selectEl.closest('tr');
-        const stockInput = row.querySelector('.stock-field');
-        const usageInput = row.querySelector('.usage-field');
-
-        if (!internalId) {
-            stockInput.value = 0;
-            usageInput.value = 0;
-            return;
-        }
-
-        stockInput.value = "...";
-        usageInput.value = "...";
-
+        if (!internalId) return;
+        row.querySelector('.stock-field').value = "...";
         try {
             const res = await fetch(`${API}?page=get_drug_stats&internal_id=${internalId}`);
             const data = await res.json();
-            stockInput.value = data.current_stock;
-            usageInput.value = data.monthly_usage;
-        } catch (e) {
-            stockInput.value = 0;
-            usageInput.value = 0;
-        }
+            row.querySelector('.stock-field').value = data.current_stock;
+            row.querySelector('.usage-field').value = data.monthly_usage;
+        } catch (e) { row.querySelector('.stock-field').value = 0; }
     }
 
     async function submitSupport() {
         const tbody = document.querySelector('#supportTable tbody');
-        if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยาอย่างน้อย 1 รายการ");
-
+        if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยา");
         const btn = document.getElementById('btnSubmitSupport');
-        btn.disabled = true;
-        btn.innerText = "กำลังบันทึก...";
+        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
 
         const items = [];
         for (let row of tbody.rows) {
             const drugId = row.querySelector('.drug-select').value;
             const qty = parseInt(row.querySelector('.req-field').value);
-            if (!drugId || isNaN(qty) || qty <= 0) continue; // ข้ามบรรทัดที่ไม่ได้เลือกยาหรือจำนวนไม่ถูกต้อง
-
-            items.push({
-                internal_id: drugId,
-                qty: qty,
-                note: "คงคลัง:" + row.querySelector('.stock-field').value + " ใช้/ด:" + row.querySelector('.usage-field').value
-            });
+            if (drugId && qty > 0) items.push({ internal_id: drugId, qty: qty });
         }
 
-        if (items.length === 0) {
-            btn.disabled = false;
-            btn.innerText = "ยืนยันบันทึกใบขอสนับสนุน";
-            return alert("กรุณาระบุจำนวนที่ต้องการขอสนับสนุนให้ถูกต้อง");
-        }
+        if (items.length === 0) { btn.disabled = false; btn.innerText = "ยืนยันใบขอสนับสนุน"; return alert("ระบุจำนวนไม่ถูกต้อง"); }
 
-        const payload = {
-            action: "save_support_request",
-            payload: {
-                items: items,
-                department: document.getElementById('docDept').value,
-                source_dest: document.getElementById('docDest').value
+        const payload = { action: "save_support_request", payload: { items: items, department: document.getElementById('docDept').value }};
+        try {
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === 'success') { alert("บันทึกสำเร็จ! เลขที่: " + result.doc_no); tbody.innerHTML = ""; document.getElementById('docDept').value = ""; }
+        } catch (e) { alert("Error"); }
+        finally { btn.disabled = false; btn.innerText = "ยืนยันใบขอสนับสนุน"; }
+    }
+
+    // --- 2. รับยาเข้าคลัง (Partial Receive Logic) ---
+    async function loadPendingSupports() {
+        const sel = document.getElementById('searchSupNo');
+        sel.innerHTML = '<option value="">-- กำลังโหลดใบขอสนับสนุน... --</option>';
+        try {
+            const res = await fetch(API + "?page=get_pending_supports");
+            const list = await res.json();
+            if(list.length === 0) {
+                sel.innerHTML = '<option value="">-- ไม่มีใบขอที่ค้างรับ --</option>';
+            } else {
+                let html = '<option value="">-- เลือกใบขอสนับสนุน --</option>';
+                list.forEach(doc => {
+                    const dateStr = new Date(doc.date_time).toLocaleDateString('th-TH');
+                    html += `<option value="${doc.doc_no}">${doc.doc_no} (${doc.department}) - ${dateStr}</option>`;
+                });
+                sel.innerHTML = html;
             }
-        };
+        } catch(e) { sel.innerHTML = '<option value="">-- ล้มเหลวในการดึงข้อมูล --</option>'; }
+    }
 
+    async function searchSupportDoc() {
+        const docNo = document.getElementById('searchSupNo').value;
+        const tbody = document.querySelector('#receiveTable tbody');
+        
+        if (!docNo) return alert("กรุณาเลือกใบขอสนับสนุนจาก Dropdown ก่อนครับ");
+
+        try {
+            const res = await fetch(`${API}?page=get_support_doc&doc_no=${docNo}`);
+            const items = await res.json();
+            
+            if(items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-success">เอกสารนี้ถูกรับเข้าคลังครบ 100% แล้ว</td></tr>`;
+                document.getElementById('btnSubmitReceive').disabled = true;
+                return;
+            }
+
+            tbody.innerHTML = "";
+            items.forEach(item => {
+                const drug = db.drugs.find(d => (d.internal_id || d.Internal_ID) === item.internal_id) || {};
+                const name = (drug.generic_name || drug.generic_Name || "Unknown") + " " + (drug.strength || "");
+
+                const row = document.createElement('tr');
+                row.dataset.id = item.internal_id;
+                
+                // ให้ Default เป็นจำนวนที่ค้างรับ (remain_qty)
+                row.innerHTML = `
+                    <td class="fw-bold text-primary">${name}</td>
+                    <td class="text-center">${item.req_qty}</td>
+                    <td class="text-center text-secondary">${item.already_rec_qty}</td>
+                    <td><input type="number" class="form-control rec-qty border-success" value="${item.remain_qty}" min="0"></td>
+                    <td><input type="text" class="form-control lot-no" placeholder="Lot."></td>
+                    <td><input type="date" class="form-control exp-date"></td>
+                `;
+                tbody.appendChild(row);
+            });
+            document.getElementById('btnSubmitReceive').disabled = false;
+        } catch(e) { alert("ดึงข้อมูลล้มเหลว"); }
+    }
+
+    async function submitReceive() {
+        const tbody = document.querySelector('#receiveTable tbody');
+        const docNo = document.getElementById('searchSupNo').value;
+        const btn = document.getElementById('btnSubmitReceive');
+        
+        const items = [];
+        let isValid = true;
+
+        for (let row of tbody.rows) {
+            const internal_id = row.dataset.id;
+            const rec_qty = parseFloat(row.querySelector('.rec-qty').value);
+            const lot_no = row.querySelector('.lot-no').value.trim();
+            const exp_date = row.querySelector('.exp-date').value;
+
+            // ถ้ารับ 0 เม็ดในครั้งนี้ จะไม่บันทึกลงไป (ข้ามรายการนี้ไปก่อน)
+            if (rec_qty > 0) {
+                if (!lot_no || !exp_date) { isValid = false; break; }
+                items.push({ internal_id, rec_qty, lot_no, exp_date });
+            }
+        }
+
+        if(!isValid) return alert("กรุณากรอก Lot No. และวันหมดอายุให้ครบถ้วน สำหรับรายการที่มียอดรับจริง");
+        if(items.length === 0) return alert("คุณไม่ได้ใส่ยอดรับจริงเลย หรือใส่ 0 ทั้งหมด");
+
+        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+
+        const payload = { action: "save_receive", payload: { ref_doc: docNo, items: items } };
         try {
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
             if (result.status === 'success') {
-                alert("บันทึกสำเร็จ! เลขที่ใบขอสนับสนุน: " + result.doc_no);
-                tbody.innerHTML = ""; // ล้างตารางหลังบันทึกเสร็จ
-            } else {
-                alert("บันทึกไม่สำเร็จ: " + result.message);
+                alert("รับยาเข้าคลังเรียบร้อย! เลขที่ใบรับ: " + result.doc_no);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-success">ทำรายการเรียบร้อย</td></tr>`;
+                loadPendingSupports(); // โหลด Dropdown ใหม่เพื่อเช็กว่ามีใบไหนหายไปบ้างไหม
             }
-        } catch (e) {
-            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "ยืนยันบันทึกใบขอสนับสนุน";
-        }
+        } catch(e) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
+        finally { btn.innerText = "ยืนยันรับยาเข้าคลัง"; btn.disabled = true; } 
     }
 
-    // --- ส่วนควบคุมแท็บ ---
-    function switchTab(tab, el) {
-        document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
-        document.getElementById('page-' + tab).style.display = 'block';
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        el.classList.add('active');
-        renderDropdowns(); // รีเฟรชเผื่อมีข้อมูลใหม่
-    }
-
-    function switchMaster(sub, el) {
-        document.querySelectorAll('.m-view').forEach(v => v.style.display = 'none');
-        document.getElementById('m-' + sub).style.display = 'block';
-        document.querySelectorAll('.master-tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-    }
-
+    // --- Master Save ---
     function updateNelmSub(val) {
         const sel = document.getElementById('nelm-sub');
-        if (!sel) return;
-        sel.innerHTML = '';
-        let opts = (val === 'ED') ? ['b','s','ex','R1','R2'] : (val === 'NED' ? ['NED'] : (val === 'PS' ? ['PS'] : ['Other']));
+        if(!sel) return; sel.innerHTML = '';
+        const opts = (val === 'ED') ? ['b','s','ex','R1','R2'] : ['Other'];
         opts.forEach(o => sel.add(new Option(o, o)));
     }
 
     async function saveMaster(e, action) {
         e.preventDefault();
-        const btn = e.target.querySelector('button');
-        const oldTxt = btn.innerText;
-        btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
-        
-        const formData = new FormData(e.target);
-        const payload = Object.fromEntries(formData.entries());
-
+        const btn = e.target.querySelector('button'); btn.disabled = true;
+        const payload = Object.fromEntries(new FormData(e.target).entries());
         try {
             const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
             const result = await res.json();
-            if(result.status === 'success') {
-                alert("บันทึกข้อมูลสำเร็จ! รหัสคือ: " + result.new_id);
-                e.target.reset();
-                await initData(); 
-            } else {
-                alert("เกิดข้อผิดพลาด: " + result.message);
-            }
-        } catch (err) { 
-            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้"); 
-        } finally { 
-            btn.innerText = oldTxt; btn.disabled = false; 
-        }
+            if(result.status === 'success') { alert("บันทึกรหัส " + result.new_id + " สำเร็จ!"); e.target.reset(); initData(); }
+        } catch (err) { alert("Error"); } finally { btn.disabled = false; }
     }
 </script>
 </body>
