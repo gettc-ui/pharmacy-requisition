@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <!-- หน้า 2: รับยาเข้าคลัง (ระบบรับบางส่วน Partial Receive) -->
+        <!-- หน้า 2: รับยาเข้าคลัง (รองรับการแยก Lot) -->
         <div id="p-receive" class="p-view" style="display:none;">
             <div class="card p-4">
                 <h5 class="fw-bold mb-4 text-success"><i class="bi bi-box-arrow-in-down"></i> รับยาเข้าคลัง</h5>
@@ -89,18 +89,19 @@
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle" id="receiveTable">
-                        <thead class="table-light">
+                        <thead class="table-light text-center">
                             <tr>
-                                <th style="width: 25%;">รายการยาสามัญ</th>
-                                <th style="width: 10%;">ขอไป</th>
-                                <th style="width: 10%;">รับแล้ว</th>
-                                <th style="width: 15%;">รับครั้งนี้</th>
-                                <th style="width: 20%;">Lot No.</th>
-                                <th style="width: 20%;">วันหมดอายุ (Exp.)</th>
+                                <th style="width: 20%;" class="text-start">รายการยาสามัญ</th>
+                                <th style="width: 8%;">ขอไป</th>
+                                <th style="width: 8%;">รับแล้ว</th>
+                                <th style="width: 12%;">รับครั้งนี้</th>
+                                <th style="width: 17%;">Lot No.</th>
+                                <th style="width: 18%;">วันหมดอายุ (Exp.)</th>
+                                <th style="width: 12%;">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td colspan="6" class="text-center text-muted">กรุณาเลือกใบขอสนับสนุนแล้วกด "ดึงรายการยา"</td></tr>
+                            <tr><td colspan="7" class="text-center text-muted">กรุณาเลือกใบขอสนับสนุนแล้วกด "ดึงรายการยา"</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -144,7 +145,7 @@
                     </form>
                 </div>
             </div>
-            <!-- ยี่ห้อ, บริษัท, ผู้ใช้ โครงสร้างเดิม -->
+            <!-- ซ่อนฟอร์มอื่นๆ ไว้เพื่อความกระชับ (โค้ดเดิม) -->
             <div id="m-trade" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">ชื่อการค้า</h5><form onsubmit="saveMaster(event, 'save_trade')"><div class="row g-3"><div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" readonly></div><div class="col-md-9"><label class="form-label">ยาหลัก</label><select name="internal_id" id="sel-gen" class="form-select" required></select></div><div class="col-md-6"><label class="form-label">ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div><div class="col-md-3"><label class="form-label">TPU</label><input name="tpu_code" class="form-control"></div><div class="col-md-3"><label class="form-label">บริษัท</label><select name="manufact_id" id="sel-com" class="form-select" required></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
             <div id="m-company" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">บริษัท</h5><form onsubmit="saveMaster(event, 'save_company')"><div class="row g-3"><div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" readonly></div><div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
             <div id="m-user" class="m-view" style="display:none;"><div class="card p-4"><h5 class="fw-bold mb-4 text-primary">ผู้ใช้งาน</h5><form onsubmit="saveMaster(event, 'save_user')"><div class="row g-3"><div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" readonly></div><div class="col-md-5"><label class="form-label">ชื่อ</label><input name="full_name" class="form-control" required></div><div class="col-md-4"><label class="form-label">Username</label><input name="username" class="form-control" required></div><div class="col-md-4"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div><div class="col-md-4"><label class="form-label">สิทธิ์</label><select name="role" class="form-select"><option value="PHARMACIST">คลังยา</option></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
@@ -217,7 +218,7 @@
             <td><input type="number" class="form-control stock-field" value="0" readonly></td>
             <td><input type="number" class="form-control usage-field" value="0" readonly></td>
             <td><input type="number" class="form-control req-field" value="0" min="1"></td>
-            <td><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
+            <td class="text-center"><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
         `;
         tbody.appendChild(row);
     }
@@ -250,7 +251,7 @@
 
         if (items.length === 0) { btn.disabled = false; btn.innerText = "ยืนยันใบขอสนับสนุน"; return alert("ระบุจำนวนไม่ถูกต้อง"); }
 
-        const payload = { action: "save_support_request", payload: { items: items, department: document.getElementById('docDept').value }};
+        const payload = { action: "save_support_request", payload: { items: items, department: document.getElementById('docDept').value, source_dest: document.getElementById('docDest').value }};
         try {
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
@@ -259,7 +260,7 @@
         finally { btn.disabled = false; btn.innerText = "ยืนยันใบขอสนับสนุน"; }
     }
 
-    // --- 2. รับยาเข้าคลัง (Partial Receive Logic) ---
+    // --- 2. รับยาเข้าคลัง (Partial Receive & Split Lot) ---
     async function loadPendingSupports() {
         const sel = document.getElementById('searchSupNo');
         sel.innerHTML = '<option value="">-- กำลังโหลดใบขอสนับสนุน... --</option>';
@@ -290,7 +291,7 @@
             const items = await res.json();
             
             if(items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-success">เอกสารนี้ถูกรับเข้าคลังครบ 100% แล้ว</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-success">เอกสารนี้ถูกรับเข้าคลังครบ 100% แล้ว</td></tr>`;
                 document.getElementById('btnSubmitReceive').disabled = true;
                 return;
             }
@@ -303,7 +304,7 @@
                 const row = document.createElement('tr');
                 row.dataset.id = item.internal_id;
                 
-                // ให้ Default เป็นจำนวนที่ค้างรับ (remain_qty)
+                // เพิ่มปุ่ม +แยก Lot ในคอลัมน์สุดท้าย
                 row.innerHTML = `
                     <td class="fw-bold text-primary">${name}</td>
                     <td class="text-center">${item.req_qty}</td>
@@ -311,11 +312,34 @@
                     <td><input type="number" class="form-control rec-qty border-success" value="${item.remain_qty}" min="0"></td>
                     <td><input type="text" class="form-control lot-no" placeholder="Lot."></td>
                     <td><input type="date" class="form-control exp-date"></td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-primary" onclick="splitLotRow(this)" title="แยก Lot"><i class="bi bi-diagram-2"></i> แยก Lot</button></td>
                 `;
                 tbody.appendChild(row);
             });
             document.getElementById('btnSubmitReceive').disabled = false;
         } catch(e) { alert("ดึงข้อมูลล้มเหลว"); }
+    }
+
+    // ฟังก์ชันใหม่: แยก Lot
+    function splitLotRow(btn) {
+        const tr = btn.closest('tr');
+        const clone = tr.cloneNode(true);
+        
+        // ล้างค่าในแถวใหม่เพื่อรอให้ผู้ใช้กรอก
+        clone.querySelector('.rec-qty').value = 0;
+        clone.querySelector('.lot-no').value = "";
+        clone.querySelector('.exp-date').value = "";
+        
+        // จัดหน้าตาให้ดูรู้ว่าเป็นแถวลูก (Sub-row)
+        clone.querySelector('td:nth-child(1)').innerHTML = '<span class="ms-4 text-muted">↳ (รับเพิ่มแยก Lot)</span>';
+        clone.querySelector('td:nth-child(2)').innerHTML = '';
+        clone.querySelector('td:nth-child(3)').innerHTML = '';
+        
+        // เปลี่ยนปุ่ม แยก Lot เป็นปุ่ม ลบแถว
+        clone.querySelector('td:last-child').innerHTML = '<button class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove()"><i class="bi bi-trash"></i> ลบ</button>';
+        
+        // แทรกแถวใหม่ลงไปใต้แถวเดิม
+        tr.after(clone);
     }
 
     async function submitReceive() {
@@ -350,7 +374,7 @@
             const result = await res.json();
             if (result.status === 'success') {
                 alert("รับยาเข้าคลังเรียบร้อย! เลขที่ใบรับ: " + result.doc_no);
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-success">ทำรายการเรียบร้อย</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-success">ทำรายการเรียบร้อย</td></tr>`;
                 loadPendingSupports(); // โหลด Dropdown ใหม่เพื่อเช็กว่ามีใบไหนหายไปบ้างไหม
             }
         } catch(e) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
