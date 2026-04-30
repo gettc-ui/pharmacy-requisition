@@ -38,10 +38,10 @@
     <!-- หน้าใบขอสนับสนุน -->
     <div id="page-procure" class="page-content" style="display:none;">
         <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา</h5>
+            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา (Support Request)</h5>
             <div class="row g-3 mb-4">
                 <div class="col-md-3"><label class="form-label">วันที่เอกสาร</label><input type="date" id="docDate" class="form-control"></div>
-                <div class="col-md-4"><label class="form-label">หน่วยงานเจ้าของเรื่อง</label><input type="text" id="docDept" class="form-control" placeholder="ชื่อหน่วยงาน"></div>
+                <div class="col-md-4"><label class="form-label">หน่วยงานเจ้าของเรื่อง</label><input type="text" id="docDept" class="form-control" placeholder="ระบุชื่อหน่วยงาน"></div>
                 <div class="col-md-5"><label class="form-label">ปลายทาง</label><select id="docDest" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option><option>ห้องจ่ายยา รพ.แม่ข่าย</option></select></div>
             </div>
             <div class="table-responsive">
@@ -49,18 +49,20 @@
                     <thead class="table-light">
                         <tr>
                             <th style="width: 45%;">รายการยาสามัญ (Generic Name)</th>
-                            <th>คงคลัง</th>
+                            <th>คงคลังปัจจุบัน</th>
                             <th>ใช้/เดือน</th>
-                            <th>ขอสนับสนุน</th>
+                            <th>จำนวนขอสนับสนุน</th>
                             <th style="width: 50px;"></th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <!-- แถวข้อมูลจะว่างเปล่า จนกว่าจะกดปุ่มเพิ่ม -->
+                    </tbody>
                 </table>
             </div>
             <button class="btn btn-outline-primary btn-sm mb-4" onclick="addSupportRow()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
             <div class="text-end border-top pt-3">
-                <button class="btn btn-prm px-5" onclick="alert('ฟีเจอร์บันทึกและ PDF จะทำต่อในขั้นตอนถัดไป')">บันทึกใบสนับสนุน</button>
+                <button class="btn btn-prm px-5" id="btnSubmitSupport" onclick="submitSupport()">ยืนยันบันทึกใบขอสนับสนุน</button>
             </div>
         </div>
     </div>
@@ -78,13 +80,13 @@
             <!-- 2.1 ยาหลัก -->
             <div id="m-generic" class="m-view">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4">ยาหลัก (Generic Master)</h5>
+                    <h5 class="fw-bold mb-4 text-primary">ยาหลัก (Generic Master)</h5>
                     <form onsubmit="saveMaster(event, 'save_generic')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="DRG-xxxx" readonly></div>
+                            <div class="col-md-3"><label class="form-label">Internal ID</label><input class="form-control" placeholder="รัน DRG-xxxx อัตโนมัติ" readonly></div>
                             <div class="col-md-6"><label class="form-label">ชื่อยาสามัญ</label><input name="generic_name" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">ความแรง</label><input name="strength" class="form-control" required></div>
-                            <div class="col-md-3"><label class="form-label">รูปแบบ</label><select name="dosage_form" class="form-select"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option></select></div>
+                            <div class="col-md-3"><label class="form-label">รูปแบบยา</label><select name="dosage_form" class="form-select"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option></select></div>
                             <div class="col-md-3"><label class="form-label">หน่วยนับ</label><input name="unit" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">ประเภท</label><select name="drug_class" class="form-select"><option>รพ.สต.</option><option>PCU</option><option>วัสดุเภสัชกรรม</option></select></div>
                             <div class="col-md-3"><label class="form-label">DMSIC Type</label><select name="dmsic_type" class="form-select"><option>ยาแผนปัจจุบัน (ตลาด)</option><option>ยาได้รับสนับสนุน</option><option>ยาผลิตเอง</option></select></div>
@@ -101,10 +103,10 @@
             <!-- 2.2 ยี่ห้อ -->
             <div id="m-trade" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4">ชื่อการค้า (Trade Name)</h5>
+                    <h5 class="fw-bold mb-4 text-primary">ชื่อการค้า (Trade Name)</h5>
                     <form onsubmit="saveMaster(event, 'save_trade')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" placeholder="TRD-xxxx" readonly></div>
+                            <div class="col-md-3"><label class="form-label">Trade Code</label><input class="form-control" placeholder="รัน TRD-xxxx อัตโนมัติ" readonly></div>
                             <div class="col-md-9"><label class="form-label">เลือกยาหลัก</label><select name="internal_id" id="sel-gen" class="form-select" required></select></div>
                             <div class="col-md-6"><label class="form-label">ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div>
                             <div class="col-md-3"><label class="form-label">TPU Code</label><input name="tpu_code" class="form-control" maxlength="10"></div>
@@ -117,10 +119,10 @@
             <!-- 2.3 บริษัท -->
             <div id="m-company" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4">ข้อมูลบริษัท</h5>
+                    <h5 class="fw-bold mb-4 text-primary">ข้อมูลบริษัท</h5>
                     <form onsubmit="saveMaster(event, 'save_company')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" placeholder="COM-xxxx" readonly></div>
+                            <div class="col-md-3"><label class="form-label">Manufact ID</label><input class="form-control" placeholder="รัน COM-xxxx อัตโนมัติ" readonly></div>
                             <div class="col-md-9"><label class="form-label">ชื่อบริษัท</label><input name="company_name" class="form-control" required></div>
                             <div class="col-12"><label class="form-label">หมายเหตุ</label><textarea name="note" class="form-control" rows="2"></textarea></div>
                             <div class="col-12 text-end mt-4"><button type="submit" class="btn btn-prm">บันทึกบริษัท</button></div>
@@ -131,10 +133,10 @@
             <!-- 2.4 ผู้ใช้งาน -->
             <div id="m-user" class="m-view" style="display:none;">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-4">ผู้ใช้งาน</h5>
+                    <h5 class="fw-bold mb-4 text-primary">ผู้ใช้งาน</h5>
                     <form onsubmit="saveMaster(event, 'save_user')">
                         <div class="row g-3">
-                            <div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" placeholder="USR-xxxx" readonly></div>
+                            <div class="col-md-3"><label class="form-label">User ID</label><input class="form-control" placeholder="รัน USR-xxxx อัตโนมัติ" readonly></div>
                             <div class="col-md-5"><label class="form-label">ชื่อ-นามสกุล</label><input name="full_name" class="form-control" required></div>
                             <div class="col-md-4"><label class="form-label">หน่วยงาน</label><input name="department" class="form-control" required></div>
                             <div class="col-md-4"><label class="form-label">Username</label><input name="username" class="form-control" required></div>
@@ -151,10 +153,16 @@
 </div>
 
 <script>
+    // *** สำคัญ: นำ URL ของ Apps Script ล่าสุดมาวางที่นี่ ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
+    
     let db = { drugs:[], trades:[], companies:[], users:[] };
 
-    window.onload = () => { initData(); updateNelmSub('ED'); };
+    window.onload = () => { 
+        document.getElementById('docDate').valueAsDate = new Date();
+        initData(); 
+        updateNelmSub('ED'); 
+    };
 
     async function initData() {
         try {
@@ -167,12 +175,10 @@
     function renderDropdowns() {
         if (db.drugs && db.drugs.length > 0) {
             const drugOpts = db.drugs.map(d => {
-                // ตรวจสอบชื่อ Key ให้ตรงกับที่ Sheet ส่งมา (กันพลาดเรื่องพิมพ์เล็ก-ใหญ่)
                 const name = d.generic_name || d.generic_Name || d.Generic_Name || "Unknown";
                 const strength = d.strength || d.Strength || "";
                 return `<option value="${d.internal_id || d.Internal_ID}">${name} ${strength}</option>`;
             }).join('');
-            
             const selGen = document.getElementById('sel-gen');
             if (selGen) selGen.innerHTML = drugOpts;
         }
@@ -181,16 +187,15 @@
             const compOpts = db.companies.map(c => 
                 `<option value="${c.manufact_id || c.Manufact_ID}">${c.company_name || c.Company_Name}</option>`
             ).join('');
-            
             const selCom = document.getElementById('sel-com');
             if (selCom) selCom.innerHTML = compOpts;
         }
     }
 
+    // --- ส่วนของใบขอสนับสนุน ---
     function addSupportRow() {
-        // ตรวจสอบ db.drugs อีกครั้งเผื่อข้อมูลยังไม่มา
         if (!db.drugs || db.drugs.length === 0) {
-            return alert("ไม่มีข้อมูลยาหลักในระบบ กรุณาไปบันทึกข้อมูลหลักก่อนครับ");
+            return alert("ไม่มีข้อมูลยาหลักในระบบ กรุณาบันทึกข้อมูลหลักก่อนครับ");
         }
         
         const tbody = document.querySelector('#supportTable tbody');
@@ -202,22 +207,106 @@
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><select class="form-select">${drugOpts}</select></td>
-            <td><input type="number" class="form-control" value="0"></td>
-            <td><input type="number" class="form-control" value="0"></td>
-            <td><input type="number" class="form-control" value="0"></td>
+            <td>
+                <select class="form-select drug-select" onchange="updateRowStats(this)">
+                    <option value="">-- เลือกรายการยา --</option>
+                    ${drugOpts}
+                </select>
+            </td>
+            <td><input type="number" class="form-control stock-field" value="0" readonly></td>
+            <td><input type="number" class="form-control usage-field" value="0" readonly></td>
+            <td><input type="number" class="form-control req-field" value="0" min="1"></td>
             <td><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
         `;
         tbody.appendChild(row);
     }
 
+    async function updateRowStats(selectEl) {
+        const internalId = selectEl.value;
+        const row = selectEl.closest('tr');
+        const stockInput = row.querySelector('.stock-field');
+        const usageInput = row.querySelector('.usage-field');
+
+        if (!internalId) {
+            stockInput.value = 0;
+            usageInput.value = 0;
+            return;
+        }
+
+        stockInput.value = "...";
+        usageInput.value = "...";
+
+        try {
+            const res = await fetch(`${API}?page=get_drug_stats&internal_id=${internalId}`);
+            const data = await res.json();
+            stockInput.value = data.current_stock;
+            usageInput.value = data.monthly_usage;
+        } catch (e) {
+            stockInput.value = 0;
+            usageInput.value = 0;
+        }
+    }
+
+    async function submitSupport() {
+        const tbody = document.querySelector('#supportTable tbody');
+        if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยาอย่างน้อย 1 รายการ");
+
+        const btn = document.getElementById('btnSubmitSupport');
+        btn.disabled = true;
+        btn.innerText = "กำลังบันทึก...";
+
+        const items = [];
+        for (let row of tbody.rows) {
+            const drugId = row.querySelector('.drug-select').value;
+            const qty = parseInt(row.querySelector('.req-field').value);
+            if (!drugId || isNaN(qty) || qty <= 0) continue; // ข้ามบรรทัดที่ไม่ได้เลือกยาหรือจำนวนไม่ถูกต้อง
+
+            items.push({
+                internal_id: drugId,
+                qty: qty,
+                note: "คงคลัง:" + row.querySelector('.stock-field').value + " ใช้/ด:" + row.querySelector('.usage-field').value
+            });
+        }
+
+        if (items.length === 0) {
+            btn.disabled = false;
+            btn.innerText = "ยืนยันบันทึกใบขอสนับสนุน";
+            return alert("กรุณาระบุจำนวนที่ต้องการขอสนับสนุนให้ถูกต้อง");
+        }
+
+        const payload = {
+            action: "save_support_request",
+            payload: {
+                items: items,
+                department: document.getElementById('docDept').value,
+                source_dest: document.getElementById('docDest').value
+            }
+        };
+
+        try {
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert("บันทึกสำเร็จ! เลขที่ใบขอสนับสนุน: " + result.doc_no);
+                tbody.innerHTML = ""; // ล้างตารางหลังบันทึกเสร็จ
+            } else {
+                alert("บันทึกไม่สำเร็จ: " + result.message);
+            }
+        } catch (e) {
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "ยืนยันบันทึกใบขอสนับสนุน";
+        }
+    }
+
+    // --- ส่วนควบคุมแท็บ ---
     function switchTab(tab, el) {
         document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
         document.getElementById('page-' + tab).style.display = 'block';
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
-        // รีเฟรช Dropdown เผื่อมีการเพิ่มข้อมูลยาใหม่
-        renderDropdowns();
+        renderDropdowns(); // รีเฟรชเผื่อมีข้อมูลใหม่
     }
 
     function switchMaster(sub, el) {
@@ -250,12 +339,12 @@
             if(result.status === 'success') {
                 alert("บันทึกข้อมูลสำเร็จ! รหัสคือ: " + result.new_id);
                 e.target.reset();
-                await initData(); // โหลดข้อมูลใหม่เพื่อให้หน้าอื่นๆ เห็นข้อมูลที่เพิ่งบันทึก
+                await initData(); 
             } else {
                 alert("เกิดข้อผิดพลาด: " + result.message);
             }
         } catch (err) { 
-            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง"); 
+            alert("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้"); 
         } finally { 
             btn.innerText = oldTxt; btn.disabled = false; 
         }
