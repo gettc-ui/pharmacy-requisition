@@ -152,7 +152,7 @@
 </div>
 
 <script>
-    // *** 1. ตรวจสอบให้แน่ใจว่าวาง URL ของคุณตรงนี้แล้ว ***
+    // *** สำคัญ: นำ URL ของ Apps Script มาวางที่นี่ ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
     
     let db = { drugs:[], trades:[], companies:[], users:[] };
@@ -184,7 +184,6 @@
         }
     }
 
-    // --- Tab Controllers ---
     function switchNav(tab, el) {
         document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
         document.getElementById('page-' + tab).style.display = 'block';
@@ -201,10 +200,6 @@
         document.querySelectorAll('.master-tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
     }
-
-    // ==========================================
-    // Core Functions สำหรับ ขอ และ รับ/จ่าย
-    // ==========================================
 
     function addRow(tableId) {
         if (!db.drugs || db.drugs.length === 0) return alert("ไม่มีข้อมูลยาหลัก");
@@ -233,7 +228,6 @@
         } catch (e) { row.querySelector('.stock-field').value = 0; }
     }
 
-    // --- อัปเดตระบบแจ้งเตือน Error ตรงนี้ครับ ---
     async function submitRequest(actionName, tableId, dateId, deptId, destId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
         if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยา");
@@ -259,22 +253,11 @@
             if (result.status === 'success') { 
                 alert("สำเร็จ! เลขที่: " + result.doc_no); 
                 tbody.innerHTML = ""; 
-                if(!document.getElementById(deptId).readOnly) {
-                    document.getElementById(deptId).value = ""; 
-                }
-            } else {
-                alert("บันทึกไม่สำเร็จ (จากฐานข้อมูล): " + result.message);
-            }
-        } catch (e) { 
-            alert("เชื่อมต่อฐานข้อมูลล้มเหลว (เช็ค URL หรืออัปเดต New Version): " + e.message); 
-        } finally { 
-            btn.disabled = false; btn.innerText = oldText; 
-        }
+                if(!document.getElementById(deptId).readOnly) document.getElementById(deptId).value = ""; 
+            } else { alert("บันทึกไม่สำเร็จ: " + result.message); }
+        } catch (e) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); } 
+        finally { btn.disabled = false; btn.innerText = oldText; }
     }
-
-    // ==========================================
-    // ฟังก์ชัน รับเข้า (Manual Lot) และ จ่ายออก (FEFO Auto Lot)
-    // ==========================================
 
     async function loadPendingDocs(apiPage, selectId) {
         const sel = document.getElementById(selectId); sel.innerHTML = '<option value="">-- โหลด... --</option>';
@@ -330,6 +313,7 @@
         tr.after(clone);
     }
 
+    // จุดที่แก้ปัญหา Invalid Date (เปลี่ยนจากไปแปลงวันให้ยุ่งยาก เป็นดึง string มาโชว์เลย)
     async function autoMapFEFO(tbody, internalId, drugName, reqQty, alreadyQty, remainQty) {
         try {
             const res = await fetch(`${API}?page=get_active_lots&internal_id=${internalId}`);
@@ -339,7 +323,9 @@
             for (let lot of lots) {
                 if (remainToFill <= 0) break;
                 let takeQty = Math.min(lot.qty, remainToFill);
-                let expStr = new Date(lot.exp_date).toLocaleDateString('th-TH');
+                
+                // ใช้ค่า exp_date ที่เตรียมมาให้สวยๆ จาก Backend แล้วมาโชว์เลย!
+                let expStr = lot.exp_date; 
                 
                 const tr = document.createElement('tr');
                 tr.dataset.id = internalId;
@@ -406,7 +392,6 @@
         } 
     }
 
-    // --- Master Save ---
     function updateNelmSub(val) {
         const sel = document.getElementById('nelm-sub');
         if(!sel) return; sel.innerHTML = '';
