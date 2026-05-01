@@ -152,13 +152,12 @@
 </div>
 
 <script>
-    // *** สำคัญ: นำ URL ของ Apps Script มาวางที่นี่ ***
+    // *** 1. ตรวจสอบให้แน่ใจว่าวาง URL ของคุณตรงนี้แล้ว ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
     
     let db = { drugs:[], trades:[], companies:[], users:[] };
 
     window.onload = () => { 
-        // เซ็ตวันที่ให้ทุกหน้าเป็นวันปัจจุบัน
         document.getElementById('dateSupport').valueAsDate = new Date();
         document.getElementById('dateReceive').valueAsDate = new Date();
         document.getElementById('dateWardReq').valueAsDate = new Date();
@@ -192,7 +191,6 @@
         document.querySelectorAll('.navbar .nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
         
-        // ดึงรายการอัปเดตเมื่อเข้าหน้านั้นๆ
         if(tab === 'receive') loadPendingDocs('get_pending_supports', 'selReceiveDoc');
         if(tab === 'dispense') loadPendingDocs('get_pending_ward_reqs', 'selDispenseDoc');
     }
@@ -235,6 +233,7 @@
         } catch (e) { row.querySelector('.stock-field').value = 0; }
     }
 
+    // --- อัปเดตระบบแจ้งเตือน Error ตรงนี้ครับ ---
     async function submitRequest(actionName, tableId, dateId, deptId, destId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
         if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยา");
@@ -245,7 +244,10 @@
         }
         if (items.length === 0) return alert("ระบุจำนวนไม่ถูกต้อง");
 
-        const btn = event.target; btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+        const btn = document.activeElement; 
+        const oldText = btn.innerText;
+        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+
         try {
             const payload = { 
                 action: actionName, 
@@ -253,8 +255,21 @@
             };
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            if (result.status === 'success') { alert("สำเร็จ! เลขที่: " + result.doc_no); tbody.innerHTML = ""; document.getElementById(deptId).value = ""; }
-        } catch (e) { alert("Error"); } finally { btn.disabled = false; btn.innerText = "ยืนยันการทำรายการ"; }
+            
+            if (result.status === 'success') { 
+                alert("สำเร็จ! เลขที่: " + result.doc_no); 
+                tbody.innerHTML = ""; 
+                if(!document.getElementById(deptId).readOnly) {
+                    document.getElementById(deptId).value = ""; 
+                }
+            } else {
+                alert("บันทึกไม่สำเร็จ (จากฐานข้อมูล): " + result.message);
+            }
+        } catch (e) { 
+            alert("เชื่อมต่อฐานข้อมูลล้มเหลว (เช็ค URL หรืออัปเดต New Version): " + e.message); 
+        } finally { 
+            btn.disabled = false; btn.innerText = oldText; 
+        }
     }
 
     // ==========================================
@@ -290,7 +305,6 @@
                 const name = (drug.generic_name||"") + " " + (drug.strength||"");
                 
                 if (mode === 'REC') {
-                    // ระบบรับเข้า (ต้องกรอก Lot เอง และแยก Lot ได้)
                     const tr = document.createElement('tr'); tr.dataset.id = i.internal_id;
                     tr.innerHTML = `
                         <td class="fw-bold text-primary">${name}</td><td class="text-center">${i.req_qty}</td><td class="text-center">${i.already_qty}</td>
@@ -301,7 +315,6 @@
                     `;
                     tbody.appendChild(tr);
                 } else if (mode === 'DISP') {
-                    // ระบบจ่ายยา (ดึง FEFO มาแบ่งบรรทัดให้อัตโนมัติ)
                     await autoMapFEFO(tbody, i.internal_id, name, i.req_qty, i.already_qty, i.remain_qty);
                 }
             }
@@ -317,17 +330,14 @@
         tr.after(clone);
     }
 
-    // หัวใจสำคัญ: ระบบตัด Lot อัตโนมัติ
     async function autoMapFEFO(tbody, internalId, drugName, reqQty, alreadyQty, remainQty) {
         try {
             const res = await fetch(`${API}?page=get_active_lots&internal_id=${internalId}`);
             const lots = await res.json();
-            
             let remainToFill = remainQty;
             
             for (let lot of lots) {
                 if (remainToFill <= 0) break;
-                
                 let takeQty = Math.min(lot.qty, remainToFill);
                 let expStr = new Date(lot.exp_date).toLocaleDateString('th-TH');
                 
@@ -342,7 +352,6 @@
                     <td><input type="text" class="form-control exp-date bg-light" value="${expStr}" readonly></td>
                 `;
                 tbody.appendChild(tr);
-                
                 remainToFill -= takeQty;
             }
 
@@ -357,14 +366,13 @@
     async function submitFulfill(actionName, tableId, selectId, dateId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
         const docNo = document.getElementById(selectId).value;
-        const btn = event.target;
+        const btn = document.activeElement; const oldText = btn.innerText;
         
         const items = []; let isValid = true;
 
         for (let row of tbody.rows) {
-            if(!row.dataset.id) continue; // ข้ามแถวแจ้งเตือน
+            if(!row.dataset.id) continue; 
             const id = row.dataset.id, qty = parseFloat(row.querySelector('.rec-qty').value), lot = row.querySelector('.lot-no').value;
-            // สำหรับ Dispense ไม่มี exp-date ให้กรอก (มันเป็น readonly)
             const expEl = row.querySelector('.exp-date'); 
             const exp = expEl ? expEl.value : "";
 
@@ -388,9 +396,14 @@
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center text-success">เรียบร้อย</td></tr>`;
                 if(actionName === 'save_receive') loadPendingDocs('get_pending_supports', 'selReceiveDoc');
                 else loadPendingDocs('get_pending_ward_reqs', 'selDispenseDoc');
+            } else {
+                alert("บันทึกไม่สำเร็จ: " + result.message);
             }
-        } catch(e) { alert("เกิดข้อผิดพลาด"); }
-        finally { btn.innerText = "ยืนยันการทำรายการ"; btn.disabled = false; } 
+        } catch(e) { 
+            alert("เชื่อมต่อล้มเหลว (เช็ค URL/อัปเดต New Version): " + e.message); 
+        } finally { 
+            btn.innerText = oldText; btn.disabled = false; 
+        } 
     }
 
     // --- Master Save ---
@@ -408,8 +421,7 @@
             const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
             const result = await res.json();
             if(result.status === 'success') { alert("บันทึกสำเร็จ!"); e.target.reset(); initData(); }
-        } catch (err) {} finally { btn.disabled = false; }
+            else { alert("บันทึกไม่สำเร็จ: " + result.message); }
+        } catch (err) { alert("เชื่อมต่อล้มเหลว: " + err.message); } finally { btn.disabled = false; }
     }
 </script>
-</body>
-</html>
