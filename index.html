@@ -9,17 +9,19 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root { --prm: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); color: #1e293b; font-size: 14px; }
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); color: #1e293b; font-size: 13px; }
         .navbar { background: #fff; border-bottom: 1px solid #e2e8f0; }
-        .nav-link { color: #64748b; font-weight: 600; cursor: pointer; padding: 1rem 1.5rem !important; }
+        .nav-link { color: #64748b; font-weight: 600; cursor: pointer; padding: 1rem 1.2rem !important; }
         .nav-link.active { color: var(--prm) !important; border-bottom: 3px solid var(--prm); }
         .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); background: #fff; }
         .btn-prm { background: var(--prm); color: white; border-radius: 8px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
         .btn-prm:hover { background: #1d4ed8; transform: translateY(-1px); }
-        .form-label { font-weight: 600; color: #475569; font-size: 13px; }
-        .form-control:read-only { background-color: #f1f5f9; cursor: not-allowed; }
-        .master-tab { cursor: pointer; padding: 10px 20px; border-radius: 10px; margin-right: 8px; background: #e2e8f0; font-weight: 600; transition: 0.2s; }
-        .master-tab.active { background: var(--prm); color: white; }
+        .form-label { font-weight: 600; color: #475569; font-size: 12px; }
+        .form-control, .form-select { font-size: 13px; }
+        .form-control:read-only { background-color: #f8fafc; }
+        .summary-box { background: #f1f5f9; border-radius: 10px; padding: 15px; margin-top: 15px; border: 1px solid #e2e8f0; }
+        .summary-label { font-size: 12px; color: #64748b; margin-bottom: 5px; }
+        .summary-value { font-size: 18px; font-weight: 700; color: #1e293b; }
     </style>
 </head>
 <body>
@@ -37,20 +39,19 @@
     </div>
 </nav>
 
-<div class="container mt-4 pb-5">
+<div class="container-fluid mt-4 px-4 pb-5">
 
-    <!-- 1. หน้าขอสนับสนุนยา (เราขอไปยังแม่ข่าย) -->
     <div id="page-req_support" class="page-content">
         <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา (ส่งแม่ข่าย)</h5>
+            <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical"></i> บันทึกใบขอสนับสนุนยา</h5>
             <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="form-label">วันที่</label><input type="date" id="dateSupport" class="form-control"></div>
-                <div class="col-md-4"><label class="form-label">หน่วยงานที่ขอ (ของเรา)</label><input type="text" id="deptSupport" class="form-control" placeholder="ชื่อหน่วยงาน"></div>
-                <div class="col-md-5"><label class="form-label">ขอไปยัง (ปลายทาง)</label><select id="destSupport" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option></select></div>
+                <div class="col-md-2"><label class="form-label">วันที่</label><input type="date" id="dateSupport" class="form-control"></div>
+                <div class="col-md-3"><label class="form-label">หน่วยงานที่ขอ</label><input type="text" id="deptSupport" class="form-control" placeholder="ชื่อหน่วยงาน"></div>
+                <div class="col-md-4"><label class="form-label">ขอไปยัง</label><select id="destSupport" class="form-select"><option>คลังใหญ่ รพ.แม่ข่าย</option></select></div>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered align-middle" id="tableSupport">
-                    <thead class="table-light"><tr><th style="width: 45%;">รายการยา</th><th>คงคลัง</th><th>ใช้/เดือน</th><th>จำนวนที่ขอ</th><th style="width: 50px;"></th></tr></thead>
+                    <thead class="table-light"><tr><th style="width: 40%;">รายการยา</th><th style="width: 15%;">คงคลัง</th><th style="width: 15%;">ใช้/เดือน</th><th style="width: 20%;">จำนวนที่ขอ</th><th style="width: 50px;"></th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -59,14 +60,13 @@
         </div>
     </div>
 
-    <!-- 2. หน้ารับเข้าคลัง (รับของที่ขอไป) -->
     <div id="page-receive" class="page-content" style="display:none;">
         <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-success"><i class="bi bi-box-arrow-in-down"></i> รับยาเข้าคลัง</h5>
+            <h5 class="fw-bold mb-4 text-success"><i class="bi bi-box-arrow-in-down"></i> รับยาเข้าคลังและบันทึกต้นทุน</h5>
             <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="form-label">วันที่รับ</label><input type="date" id="dateReceive" class="form-control"></div>
-                <div class="col-md-6">
-                    <label class="form-label text-danger">เลือกใบขอสนับสนุนอ้างอิง</label>
+                <div class="col-md-2"><label class="form-label">วันที่รับ</label><input type="date" id="dateReceive" class="form-control"></div>
+                <div class="col-md-5">
+                    <label class="form-label">เลือกใบขอสนับสนุนอ้างอิง</label>
                     <div class="input-group">
                         <select id="selReceiveDoc" class="form-select border-danger"><option value="">-- โหลดข้อมูล... --</option></select>
                         <button class="btn btn-danger" onclick="searchDoc('get_support_doc', 'selReceiveDoc', 'tableReceive', 'REC')">ดึงรายการยา</button>
@@ -75,44 +75,72 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered align-middle" id="tableReceive">
-                    <thead class="table-light text-center">
-                        <tr><th class="text-start" style="width: 25%;">ยา</th><th>ขอไป</th><th>รับแล้ว</th><th>รับครั้งนี้</th><th>Lot No.</th><th>วันหมดอายุ (Exp.)</th><th>จัดการ</th></tr>
+                    <thead class="table-light text-center" style="font-size: 11px;">
+                        <tr>
+                            <th class="text-start" style="width: 15%;">ยา</th>
+                            <th style="width: 15%;">ยี่ห้อ (Trade Name)</th>
+                            <th style="width: 8%;">รับครั้งนี้</th>
+                            <th style="width: 10%;">Lot / Exp</th>
+                            <th style="width: 10%;">ต้นทุน/หน่วย</th>
+                            <th style="width: 10%;">มูลค่า/หน่วย</th>
+                            <th style="width: 12%;">รวมต้นทุน</th>
+                            <th style="width: 12%;">รวมมูลค่า</th>
+                            <th style="width: 8%;">จัดการ</th>
+                        </tr>
                     </thead>
-                    <tbody><tr><td colspan="7" class="text-center text-muted">เลือกใบขอและกด "ดึงรายการยา"</td></tr></tbody>
+                    <tbody style="font-size: 12px;">
+                        <tr><td colspan="9" class="text-center text-muted">เลือกใบขอและกด "ดึงรายการยา"</td></tr>
+                    </tbody>
                 </table>
             </div>
-            <div class="text-end border-top pt-3"><button class="btn btn-success px-5" onclick="submitFulfill('save_receive', 'tableReceive', 'selReceiveDoc', 'dateReceive')">ยืนยันรับยาเข้าคลัง</button></div>
+
+            <div class="summary-box">
+                <div class="row text-center">
+                    <div class="col-md-4 border-end">
+                        <div class="summary-label">จำนวนรายการทั้งหมด</div>
+                        <div class="summary-value" id="rec-count">0</div>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <div class="summary-label text-danger">ผลรวมต้นทุนใบรับนี้</div>
+                        <div class="summary-value text-danger" id="rec-total-cost">0.00</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-label text-primary">ผลรวมมูลค่าใบรับนี้</div>
+                        <div class="summary-value text-primary" id="rec-total-value">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end border-top pt-3 mt-4"><button class="btn btn-success px-5" onclick="submitFulfill('save_receive', 'tableReceive', 'selReceiveDoc', 'dateReceive')">ยืนยันรับยาและบันทึกบัญชี</button></div>
         </div>
     </div>
 
-    <!-- 3. หน้าขอเบิกยา (Ward/รพ.สต. ขอเบิกจากเรา) -->
     <div id="page-req_ward" class="page-content" style="display:none;">
         <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-warning text-dark"><i class="bi bi-journal-plus"></i> บันทึกใบขอเบิกยา (Ward/หน่วยย่อย เบิก)</h5>
+            <h5 class="fw-bold mb-4 text-warning text-dark"><i class="bi bi-journal-plus"></i> บันทึกใบขอเบิกยา</h5>
             <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="form-label">วันที่</label><input type="date" id="dateWardReq" class="form-control"></div>
-                <div class="col-md-4"><label class="form-label">ผู้เบิก (Ward/รพ.สต.)</label><input type="text" id="deptWardReq" class="form-control" placeholder="ชื่อหน่วยงานเบิก"></div>
-                <div class="col-md-5"><label class="form-label">เบิกจาก</label><input type="text" id="destWardReq" class="form-control" value="คลังยา" readonly></div>
+                <div class="col-md-2"><label class="form-label">วันที่</label><input type="date" id="dateWardReq" class="form-control"></div>
+                <div class="col-md-3"><label class="form-label">ผู้เบิก (Ward)</label><input type="text" id="deptWardReq" class="form-control" placeholder="ชื่อวอร์ด"></div>
+                <div class="col-md-3"><label class="form-label">เบิกจาก</label><input type="text" id="destWardReq" class="form-control" value="คลังยา" readonly></div>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered align-middle" id="tableWardReq">
-                    <thead class="table-light"><tr><th style="width: 45%;">รายการยา</th><th>คงคลัง(เรา)</th><th>ใช้/เดือน</th><th>จำนวนที่เบิก</th><th style="width: 50px;"></th></tr></thead>
+                    <thead class="table-light"><tr><th style="width: 40%;">รายการยา</th><th style="width: 15%;">คงคลัง(เรา)</th><th style="width: 15%;">ใช้/เดือน</th><th style="width: 20%;">จำนวนที่เบิก</th><th style="width: 50px;"></th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="btn btn-outline-warning text-dark btn-sm mb-4" onclick="addRow('tableWardReq')"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
+            <button class="btn btn-outline-warning text-dark btn-sm mb-4" onclick="addRow('tableWardReq')"><i class="bi bi-plus-lg"></i> เพิ่มรายการ</button>
             <div class="text-end border-top pt-3"><button class="btn btn-warning text-dark fw-bold px-5" onclick="submitRequest('save_ward_request', 'tableWardReq', 'dateWardReq', 'deptWardReq', 'destWardReq')">ยืนยันใบขอเบิก</button></div>
         </div>
     </div>
 
-    <!-- 4. หน้าจ่ายออกจากคลัง (Dispense - FEFO) -->
     <div id="page-dispense" class="page-content" style="display:none;">
         <div class="card p-4">
-            <h5 class="fw-bold mb-4 text-danger"><i class="bi bi-box-arrow-up"></i> จ่ายยาออกจากคลัง (ระบบตัด Lot FEFO อัตโนมัติ)</h5>
+            <h5 class="fw-bold mb-4 text-danger"><i class="bi bi-box-arrow-up"></i> จ่ายยาออกจากคลัง (FEFO)</h5>
             <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="form-label">วันที่จ่าย</label><input type="date" id="dateDispense" class="form-control"></div>
-                <div class="col-md-6">
-                    <label class="form-label text-primary">เลือกใบขอเบิกอ้างอิง</label>
+                <div class="col-md-2"><label class="form-label">วันที่จ่าย</label><input type="date" id="dateDispense" class="form-control"></div>
+                <div class="col-md-5">
+                    <label class="form-label">เลือกใบขอเบิกอ้างอิง</label>
                     <div class="input-group">
                         <select id="selDispenseDoc" class="form-select border-primary"><option value="">-- โหลดข้อมูล... --</option></select>
                         <button class="btn btn-primary" onclick="searchDoc('get_ward_req_doc', 'selDispenseDoc', 'tableDispense', 'DISP')">ดึงรายการเบิก</button>
@@ -122,7 +150,7 @@
             <div class="table-responsive">
                 <table class="table table-bordered align-middle" id="tableDispense">
                     <thead class="table-light text-center">
-                        <tr><th class="text-start" style="width: 25%;">ยา</th><th>ขอเบิก</th><th>จ่ายแล้ว</th><th>จ่ายครั้งนี้ (FEFO)</th><th>Lot No.</th><th>วันหมดอายุ (Exp.)</th></tr>
+                        <tr><th class="text-start" style="width: 25%;">ยา</th><th>ขอเบิก</th><th>จ่ายแล้ว</th><th>จ่ายครั้งนี้ (FEFO)</th><th>Lot No.</th><th>วันหมดอายุ</th></tr>
                     </thead>
                     <tbody><tr><td colspan="6" class="text-center text-muted">เลือกใบเบิกและกด "ดึงรายการเบิก"</td></tr></tbody>
                 </table>
@@ -131,31 +159,25 @@
         </div>
     </div>
 
-    <!-- 5. หน้าจัดการข้อมูลหลัก -->
     <div id="page-master" class="page-content" style="display:none;">
-        <div class="d-flex mb-4 overflow-auto pb-2">
-            <div class="master-tab active" onclick="switchMaster('generic', this)">1. ยาหลัก (Generic)</div>
-            <div class="master-tab" onclick="switchMaster('trade', this)">2. ยี่ห้อ (Trade Name)</div>
+        <div id="master-tabs" class="d-flex mb-4 overflow-auto pb-2">
+            <div class="master-tab active" onclick="switchMaster('generic', this)">1. ยาหลัก</div>
+            <div class="master-tab" onclick="switchMaster('trade', this)">2. ยี่ห้อ</div>
             <div class="master-tab" onclick="switchMaster('company', this)">3. บริษัท</div>
-            <div class="master-tab" onclick="switchMaster('user', this)">4. ผู้ใช้งาน</div>
         </div>
         <div id="master-content">
             <div id="m-generic" class="m-view">
-                <div class="card p-4"><h5 class="fw-bold mb-4 text-primary">ยาหลัก (Generic)</h5><form onsubmit="saveMaster(event, 'save_generic')"><div class="row g-3"><div class="col-md-3"><label>Internal ID</label><input class="form-control" readonly></div><div class="col-md-6"><label>ชื่อยาสามัญ</label><input name="generic_name" class="form-control" required></div><div class="col-md-3"><label>ความแรง</label><input name="strength" class="form-control" required></div><div class="col-md-3"><label>รูปแบบยา</label><select name="dosage_form" class="form-select"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option></select></div><div class="col-md-3"><label>หน่วยนับ</label><input name="unit" class="form-control" required></div><div class="col-md-3"><label>ประเภท</label><select name="drug_class" class="form-select"><option>รพ.สต.</option><option>PCU</option><option>วัสดุ</option></select></div><div class="col-md-3"><label>DMSIC</label><select name="dmsic_type" class="form-select"><option>ยาแผนปัจจุบัน</option><option>สนับสนุน</option></select></div><div class="col-md-3"><label>NELM</label><select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)"><option value="ED">ED</option><option value="NED">NED</option></select></div><div class="col-md-3"><label>NELM Sub</label><select name="nelm_subclass" id="nelm-sub" class="form-select"></select></div><div class="col-md-6"><label>GPU Code</label><input name="gpu_code" class="form-control"></div><div class="col-md-3"><label>ROP</label><input type="number" name="rop" class="form-control" value="0"></div><div class="col-md-3"><label>Safety Stock</label><input type="number" name="safety_stock" class="form-control" value="0"></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div>
+                <div class="card p-4"><h5 class="text-primary">ยาหลัก (Generic)</h5><form onsubmit="saveMaster(event, 'save_generic')"><div class="row g-3"><div class="col-md-3"><label>Internal ID</label><input class="form-control" readonly></div><div class="col-md-6"><label>ชื่อยาสามัญ</label><input name="generic_name" class="form-control" required></div><div class="col-md-3"><label>ความแรง</label><input name="strength" class="form-control" required></div><div class="col-md-3"><label>หน่วยนับ</label><input name="unit" class="form-control" required></div><div class="col-md-3"><label>NELM</label><select name="nelm_class" class="form-select" onchange="updateNelmSub(this.value)"><option value="ED">ED</option><option value="NED">NED</option></select></div><div class="col-md-3"><label>Sub</label><select name="nelm_subclass" id="nelm-sub" class="form-select"></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div>
             </div>
-            <!-- ซ่อนฟอร์มอื่นเพื่อประหยัดที่ -->
-            <div id="m-trade" class="m-view" style="display:none;"><div class="card p-4"><h5>ชื่อการค้า</h5><form onsubmit="saveMaster(event, 'save_trade')"><div class="row g-3"><div class="col-md-3"><input class="form-control" readonly></div><div class="col-md-9"><select name="internal_id" id="sel-gen" class="form-select" required></select></div><div class="col-md-6"><input name="trade_name" class="form-control" required></div><div class="col-md-3"><input name="tpu_code" class="form-control"></div><div class="col-md-3"><select name="manufact_id" id="sel-com" class="form-select" required></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
+            <div id="m-trade" class="m-view" style="display:none;"><div class="card p-4"><h5>ชื่อการค้า</h5><form onsubmit="saveMaster(event, 'save_trade')"><div class="row g-3"><div class="col-md-3"><input class="form-control" readonly></div><div class="col-md-9"><select name="internal_id" id="sel-gen" class="form-select" required></select></div><div class="col-md-6"><label>ชื่อยี่ห้อ</label><input name="trade_name" class="form-control" required></div><div class="col-md-3"><label>TPU</label><input name="tpu_code" class="form-control"></div><div class="col-md-3"><label>บริษัท</label><select name="manufact_id" id="sel-com" class="form-select" required></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
             <div id="m-company" class="m-view" style="display:none;"><div class="card p-4"><h5>บริษัท</h5><form onsubmit="saveMaster(event, 'save_company')"><div class="row g-3"><div class="col-md-3"><input class="form-control" readonly></div><div class="col-md-9"><input name="company_name" class="form-control" required></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
-            <div id="m-user" class="m-view" style="display:none;"><div class="card p-4"><h5>ผู้ใช้งาน</h5><form onsubmit="saveMaster(event, 'save_user')"><div class="row g-3"><div class="col-md-3"><input class="form-control" readonly></div><div class="col-md-5"><input name="full_name" class="form-control" required></div><div class="col-md-4"><input name="username" class="form-control" required></div><div class="col-md-4"><input type="password" name="password" class="form-control" required></div><div class="col-md-4"><select name="role" class="form-select"><option value="PHARMACIST">คลังยา</option></select></div><div class="col-12 text-end"><button type="submit" class="btn btn-prm">บันทึก</button></div></div></form></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    // *** สำคัญ: นำ URL ของ Apps Script มาวางที่นี่ ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
-    
-    let db = { drugs:[], trades:[], companies:[], users:[] };
+    let db = { drugs:[], trades:[], companies:[] };
 
     window.onload = () => { 
         document.getElementById('dateSupport').valueAsDate = new Date();
@@ -174,12 +196,12 @@
     }
 
     function renderDropdowns() {
-        if (db.drugs && db.drugs.length > 0) {
-            const opts = db.drugs.map(d => `<option value="${d.internal_id || d.Internal_ID}">${d.generic_name || d.generic_Name} ${d.strength || ""}</option>`).join('');
+        if (db.drugs) {
+            const opts = db.drugs.map(d => `<option value="${d.internal_id}">${d.generic_name} ${d.strength || ""}</option>`).join('');
             const selGen = document.getElementById('sel-gen'); if(selGen) selGen.innerHTML = opts;
         }
-        if (db.companies && db.companies.length > 0) {
-            const opts = db.companies.map(c => `<option value="${c.manufact_id || c.Manufact_ID}">${c.company_name || c.Company_Name}</option>`).join('');
+        if (db.companies) {
+            const opts = db.companies.map(c => `<option value="${c.manufact_id}">${c.company_name}</option>`).join('');
             const selCom = document.getElementById('sel-com'); if(selCom) selCom.innerHTML = opts;
         }
     }
@@ -189,7 +211,6 @@
         document.getElementById('page-' + tab).style.display = 'block';
         document.querySelectorAll('.navbar .nav-link').forEach(l => l.classList.remove('active'));
         el.classList.add('active');
-        
         if(tab === 'receive') loadPendingDocs('get_pending_supports', 'selReceiveDoc');
         if(tab === 'dispense') loadPendingDocs('get_pending_ward_reqs', 'selDispenseDoc');
     }
@@ -202,18 +223,10 @@
     }
 
     function addRow(tableId) {
-        if (!db.drugs || db.drugs.length === 0) return alert("ไม่มีข้อมูลยาหลัก");
         const tbody = document.getElementById(tableId).querySelector('tbody');
-        const opts = db.drugs.map(d => `<option value="${d.internal_id || d.Internal_ID}">${d.generic_name || d.generic_Name} ${d.strength || ""}</option>`).join('');
-        
+        const opts = db.drugs.map(d => `<option value="${d.internal_id}">${d.generic_name} ${d.strength || ""}</option>`).join('');
         const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><select class="form-select drug-select" onchange="updateRowStats(this)"><option value="">-- เลือกยา --</option>${opts}</select></td>
-            <td><input type="number" class="form-control stock-field" value="0" readonly></td>
-            <td><input type="number" class="form-control usage-field" value="0" readonly></td>
-            <td><input type="number" class="form-control req-field" value="0" min="1"></td>
-            <td class="text-center"><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
-        `;
+        row.innerHTML = `<td><select class="form-select drug-select" onchange="updateRowStats(this)"><option value="">-- เลือกยา --</option>${opts}</select></td><td><input class="form-control stock-field" readonly></td><td><input class="form-control usage-field" readonly></td><td><input type="number" class="form-control req-field" value="0"></td><td class="text-center"><button class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>`;
         tbody.appendChild(row);
     }
 
@@ -230,33 +243,19 @@
 
     async function submitRequest(actionName, tableId, dateId, deptId, destId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
-        if (tbody.rows.length === 0) return alert("กรุณาเพิ่มรายการยา");
+        if (tbody.rows.length === 0) return alert("เพิ่มรายการยาก่อนครับ");
         const items = [];
         for (let row of tbody.rows) {
             const d = row.querySelector('.drug-select').value, q = parseInt(row.querySelector('.req-field').value);
             if (d && q > 0) items.push({ internal_id: d, qty: q });
         }
-        if (items.length === 0) return alert("ระบุจำนวนไม่ถูกต้อง");
-
-        const btn = document.activeElement; 
-        const oldText = btn.innerText;
-        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
-
+        const btn = event.target; btn.disabled = true; btn.innerText = "กำลังบันทึก...";
         try {
-            const payload = { 
-                action: actionName, 
-                payload: { items: items, doc_date: document.getElementById(dateId).value, department: document.getElementById(deptId).value, source_dest: document.getElementById(destId).value }
-            };
+            const payload = { action: actionName, payload: { items: items, doc_date: document.getElementById(dateId).value, department: document.getElementById(deptId).value, source_dest: document.getElementById(destId).value }};
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            
-            if (result.status === 'success') { 
-                alert("สำเร็จ! เลขที่: " + result.doc_no); 
-                tbody.innerHTML = ""; 
-                if(!document.getElementById(deptId).readOnly) document.getElementById(deptId).value = ""; 
-            } else { alert("บันทึกไม่สำเร็จ: " + result.message); }
-        } catch (e) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); } 
-        finally { btn.disabled = false; btn.innerText = oldText; }
+            if (result.status === 'success') { alert("สำเร็จ! เลขที่: " + result.doc_no); tbody.innerHTML = ""; }
+        } catch (e) { alert("Error"); } finally { btn.disabled = false; btn.innerText = "ยืนยัน"; }
     }
 
     async function loadPendingDocs(apiPage, selectId) {
@@ -265,8 +264,8 @@
             const res = await fetch(API + "?page=" + apiPage); const list = await res.json();
             if(list.length === 0) sel.innerHTML = '<option value="">-- ไม่มีเอกสารค้าง --</option>';
             else {
-                let html = '<option value="">-- เลือกเอกสารอ้างอิง --</option>';
-                list.forEach(d => { html += `<option value="${d.doc_no}">${d.doc_no} (${d.department})</option>`; });
+                let html = '<option value="">-- เลือกเอกสาร --</option>';
+                list.forEach(d => html += `<option value="${d.doc_no}">${d.doc_no} (${d.department})</option>`);
                 sel.innerHTML = html;
             }
         } catch(e) {}
@@ -274,139 +273,126 @@
 
     async function searchDoc(apiPage, selectId, tableId, mode) {
         const docNo = document.getElementById(selectId).value; const tbody = document.getElementById(tableId).querySelector('tbody');
-        if(!docNo) return alert("กรุณาเลือกเอกสารอ้างอิง");
-        
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">กำลังดึงข้อมูล...</td></tr>';
-        
+        if(!docNo) return alert("เลือกเอกสารก่อนครับ");
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">กำลังดึงข้อมูล...</td></tr>';
         try {
             const res = await fetch(`${API}?page=${apiPage}&doc_no=${docNo}`); const items = await res.json();
-            if(items.length === 0) return tbody.innerHTML = `<tr><td colspan="7" class="text-center text-success">เอกสารนี้จัดการครบ 100% แล้ว</td></tr>`;
-            
             tbody.innerHTML = "";
             for(let i of items) {
-                const drug = db.drugs.find(d => (d.internal_id || d.Internal_ID) === i.internal_id) || {};
-                const name = (drug.generic_name||"") + " " + (drug.strength||"");
-                
+                const drug = db.drugs.find(d => d.internal_id === i.internal_id) || {};
+                const name = drug.generic_name + " " + (drug.strength||"");
                 if (mode === 'REC') {
+                    // กรองยี่ห้อที่สัมพันธ์กับยาหลัก
+                    const tradeOpts = db.trades.filter(t => t.internal_id === i.internal_id).map(t => `<option value="${t.trade_code}">${t.trade_name}</option>`).join('');
                     const tr = document.createElement('tr'); tr.dataset.id = i.internal_id;
                     tr.innerHTML = `
-                        <td class="fw-bold text-primary">${name}</td><td class="text-center">${i.req_qty}</td><td class="text-center">${i.already_qty}</td>
-                        <td><input type="number" class="form-control rec-qty border-success" value="${i.remain_qty}" min="0"></td>
-                        <td><input type="text" class="form-control lot-no" placeholder="Lot."></td>
-                        <td><input type="date" class="form-control exp-date"></td>
-                        <td class="text-center"><button class="btn btn-sm btn-outline-primary" onclick="splitRecRow(this)">+ แยก Lot</button></td>
-                    `;
+                        <td class="fw-bold">${name}</td>
+                        <td><select class="form-select trd-code"><option value="">-- ระบุยี่ห้อ --</option>${tradeOpts}</select></td>
+                        <td><input type="number" class="form-control qty-field" value="${i.remain_qty}" oninput="calcRow(this)"></td>
+                        <td><input class="form-control lot-no mb-1" placeholder="Lot"><input type="date" class="form-control exp-date"></td>
+                        <td><input type="number" class="form-control cost-u" value="0" step="0.01" oninput="calcRow(this)"></td>
+                        <td><input type="number" class="form-control val-u" value="0" step="0.01" oninput="calcRow(this)"></td>
+                        <td><input class="form-control cost-t" readonly></td>
+                        <td><input class="form-control val-t" readonly></td>
+                        <td class="text-center"><button class="btn btn-sm btn-outline-primary" onclick="splitRecRow(this)">+ แยก</button></td>`;
                     tbody.appendChild(tr);
+                    calcRow(tr.querySelector('.qty-field'));
                 } else if (mode === 'DISP') {
                     await autoMapFEFO(tbody, i.internal_id, name, i.req_qty, i.already_qty, i.remain_qty);
                 }
             }
+            if(mode === 'REC') updateGrandTotals();
         } catch(e) {}
+    }
+
+    function calcRow(el) {
+        const row = el.closest('tr');
+        const qty = parseFloat(row.querySelector('.qty-field').value) || 0;
+        const costU = parseFloat(row.querySelector('.cost-u').value) || 0;
+        const valU = parseFloat(row.querySelector('.val-u').value) || 0;
+        row.querySelector('.cost-t').value = (qty * costU).toFixed(2);
+        row.querySelector('.val-t').value = (qty * valU).toFixed(2);
+        updateGrandTotals();
+    }
+
+    function updateGrandTotals() {
+        const tbody = document.getElementById('tableReceive').querySelector('tbody');
+        let count = 0, totalCost = 0, totalVal = 0;
+        for (let row of tbody.rows) {
+            if(!row.dataset.id) continue;
+            count++;
+            totalCost += parseFloat(row.querySelector('.cost-t').value) || 0;
+            totalVal += parseFloat(row.querySelector('.val-t').value) || 0;
+        }
+        document.getElementById('rec-count').innerText = count;
+        document.getElementById('rec-total-cost').innerText = totalCost.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('rec-total-value').innerText = totalVal.toLocaleString(undefined, {minimumFractionDigits: 2});
     }
 
     function splitRecRow(btn) {
         const tr = btn.closest('tr'); const clone = tr.cloneNode(true);
-        clone.querySelector('.rec-qty').value = 0; clone.querySelector('.lot-no').value = ""; clone.querySelector('.exp-date').value = "";
-        clone.querySelector('td:nth-child(1)').innerHTML = '<span class="ms-4 text-muted">↳ (รับเพิ่ม)</span>';
-        clone.querySelector('td:nth-child(2)').innerHTML = ''; clone.querySelector('td:nth-child(3)').innerHTML = '';
-        clone.querySelector('td:last-child').innerHTML = `<button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">ลบ</button>`;
+        clone.querySelector('.qty-field').value = 0; clone.querySelector('.lot-no').value = "";
+        clone.querySelector('td:nth-child(1)').innerHTML = '<span class="ms-3 text-muted">↳ (เพิ่ม Lot)</span>';
+        clone.querySelector('td:last-child').innerHTML = `<button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); updateGrandTotals();">ลบ</button>`;
         tr.after(clone);
+        updateGrandTotals();
     }
 
-    // จุดที่แก้ปัญหา Invalid Date (เปลี่ยนจากไปแปลงวันให้ยุ่งยาก เป็นดึง string มาโชว์เลย)
     async function autoMapFEFO(tbody, internalId, drugName, reqQty, alreadyQty, remainQty) {
         try {
             const res = await fetch(`${API}?page=get_active_lots&internal_id=${internalId}`);
             const lots = await res.json();
             let remainToFill = remainQty;
-            
             for (let lot of lots) {
                 if (remainToFill <= 0) break;
                 let takeQty = Math.min(lot.qty, remainToFill);
-                
-                // ใช้ค่า exp_date ที่เตรียมมาให้สวยๆ จาก Backend แล้วมาโชว์เลย!
-                let expStr = lot.exp_date; 
-                
-                const tr = document.createElement('tr');
-                tr.dataset.id = internalId;
-                tr.innerHTML = `
-                    <td class="fw-bold text-danger">${drugName}</td>
-                    <td class="text-center">${reqQty}</td>
-                    <td class="text-center">${alreadyQty}</td>
-                    <td><input type="number" class="form-control rec-qty border-danger" value="${takeQty}" max="${lot.qty}" min="0"></td>
-                    <td><input type="text" class="form-control lot-no bg-light" value="${lot.lot_no}" readonly></td>
-                    <td><input type="text" class="form-control exp-date bg-light" value="${expStr}" readonly></td>
-                `;
+                const tr = document.createElement('tr'); tr.dataset.id = internalId;
+                tr.innerHTML = `<td class="fw-bold text-danger">${drugName}</td><td class="text-center">${reqQty}</td><td class="text-center">${alreadyQty}</td><td><input type="number" class="form-control rec-qty" value="${takeQty}"></td><td><input class="form-control lot-no bg-light" value="${lot.lot_no}" readonly></td><td><input class="form-control exp-date bg-light" value="${lot.exp_date}" readonly></td>`;
                 tbody.appendChild(tr);
                 remainToFill -= takeQty;
             }
-
-            if (remainToFill > 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="6" class="text-danger bg-light text-center"><i class="bi bi-exclamation-triangle"></i> ยา ${drugName} ในคลังมีไม่พอจ่าย (ขาดอีก ${remainToFill})</td>`;
-                tbody.appendChild(tr);
-            }
-        } catch (e) { console.log(e); }
+        } catch (e) {}
     }
 
     async function submitFulfill(actionName, tableId, selectId, dateId) {
         const tbody = document.getElementById(tableId).querySelector('tbody');
         const docNo = document.getElementById(selectId).value;
-        const btn = document.activeElement; const oldText = btn.innerText;
-        
-        const items = []; let isValid = true;
-
+        const items = []; let valid = true;
         for (let row of tbody.rows) {
-            if(!row.dataset.id) continue; 
-            const id = row.dataset.id, qty = parseFloat(row.querySelector('.rec-qty').value), lot = row.querySelector('.lot-no').value;
-            const expEl = row.querySelector('.exp-date'); 
-            const exp = expEl ? expEl.value : "";
-
+            if(!row.dataset.id) continue;
+            const qty = parseFloat(row.querySelector(actionName==='save_receive'?'.qty-field':'.rec-qty').value);
             if (qty > 0) {
-                if (!lot) { isValid = false; break; }
-                items.push({ internal_id: id, qty: qty, lot_no: lot, exp_date: exp });
+                const item = { 
+                    internal_id: row.dataset.id, 
+                    qty: qty, 
+                    lot_no: row.querySelector('.lot-no').value 
+                };
+                if(actionName === 'save_receive') {
+                    item.trade_code = row.querySelector('.trd-code').value;
+                    item.exp_date = row.querySelector('.exp-date').value;
+                    item.cost_unit = row.querySelector('.cost-u').value;
+                    item.value_unit = row.querySelector('.val-u').value;
+                    item.total_cost = row.querySelector('.cost-t').value;
+                    item.total_value = row.querySelector('.val-t').value;
+                    if(!item.lot_no || !item.exp_date) { valid = false; break; }
+                }
+                items.push(item);
             }
         }
-
-        if(!isValid) return alert("กรุณากรอกข้อมูล Lot ให้ครบถ้วน");
-        if(items.length === 0) return alert("ไม่มีรายการที่ใส่จำนวนครับ");
-
-        btn.disabled = true; btn.innerText = "กำลังบันทึก...";
-
+        if(!valid || items.length === 0) return alert("ข้อมูลไม่ครบ");
+        const btn = event.target; btn.disabled = true;
         try {
             const payload = { action: actionName, payload: { ref_doc: docNo, doc_date: document.getElementById(dateId).value, items: items } };
             const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            if (result.status === 'success') {
-                alert("ทำรายการสำเร็จ! เลขที่เอกสาร: " + result.doc_no);
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-success">เรียบร้อย</td></tr>`;
-                if(actionName === 'save_receive') loadPendingDocs('get_pending_supports', 'selReceiveDoc');
-                else loadPendingDocs('get_pending_ward_reqs', 'selDispenseDoc');
-            } else {
-                alert("บันทึกไม่สำเร็จ: " + result.message);
-            }
-        } catch(e) { 
-            alert("เชื่อมต่อล้มเหลว (เช็ค URL/อัปเดต New Version): " + e.message); 
-        } finally { 
-            btn.innerText = oldText; btn.disabled = false; 
-        } 
+            if (result.status === 'success') { alert("เรียบร้อย!"); tbody.innerHTML = ""; }
+        } catch(e) { alert("Error"); } finally { btn.disabled = false; }
     }
 
-    function updateNelmSub(val) {
-        const sel = document.getElementById('nelm-sub');
-        if(!sel) return; sel.innerHTML = '';
-        const opts = (val === 'ED') ? ['b','s','ex','R1','R2'] : ['Other'];
-        opts.forEach(o => sel.add(new Option(o, o)));
-    }
-
-    async function saveMaster(e, action) {
-        e.preventDefault(); const btn = e.target.querySelector('button'); btn.disabled = true;
-        const payload = Object.fromEntries(new FormData(e.target).entries());
-        try {
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
-            const result = await res.json();
-            if(result.status === 'success') { alert("บันทึกสำเร็จ!"); e.target.reset(); initData(); }
-            else { alert("บันทึกไม่สำเร็จ: " + result.message); }
-        } catch (err) { alert("เชื่อมต่อล้มเหลว: " + err.message); } finally { btn.disabled = false; }
+    function updateNelmSub(v) { const s = document.getElementById('nelm-sub'); if(!s) return; s.innerHTML=''; const o=(v==='ED')?['b','s','ex','R1','R2']:['Other']; o.forEach(x=>s.add(new Option(x,x))); }
+    async function saveMaster(e, a) { e.preventDefault(); const b=e.target.querySelector('button'); b.disabled=true; const p=Object.fromEntries(new FormData(e.target).entries());
+        try{ const r=await fetch(API,{method:'POST',body:JSON.stringify({action:a,payload:p})}); const j=await r.json(); if(j.status==='success'){alert("สำเร็จ!"); e.target.reset(); initData();} }catch(err){}finally{b.disabled=false;}
     }
 </script>
+</body>
+</html>
