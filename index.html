@@ -15,13 +15,10 @@
         .nav-link.active { color: var(--prm) !important; border-bottom: 3px solid var(--prm); }
         .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); background: #fff; }
         .btn-prm { background: var(--prm); color: white; border-radius: 8px; font-weight: 600; border: none; padding: 10px 25px; transition: 0.2s; }
-        .btn-prm:hover { background: #1d4ed8; transform: translateY(-1px); }
-        .form-label { font-weight: 600; color: #475569; font-size: 12px; }
-        .form-control, .form-select { font-size: 13px; }
-        .form-control:read-only { background-color: #f8fafc; }
         .summary-box { background: #f1f5f9; border-radius: 10px; padding: 15px; margin-top: 15px; border: 1px solid #e2e8f0; }
         .summary-label { font-size: 12px; color: #64748b; margin-bottom: 5px; }
         .summary-value { font-size: 18px; font-weight: 700; color: #1e293b; }
+        .over-qty { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
     </style>
 </head>
 <body>
@@ -79,39 +76,31 @@
                         <tr>
                             <th class="text-start" style="width: 15%;">ยา</th>
                             <th style="width: 15%;">ยี่ห้อ (Trade Name)</th>
+                            <th style="width: 5%;">ขอไป</th>
+                            <th style="width: 5%;">รับแล้ว</th>
                             <th style="width: 8%;">รับครั้งนี้</th>
                             <th style="width: 10%;">Lot / Exp</th>
-                            <th style="width: 10%;">ต้นทุน/หน่วย</th>
-                            <th style="width: 10%;">มูลค่า/หน่วย</th>
-                            <th style="width: 12%;">รวมต้นทุน</th>
-                            <th style="width: 12%;">รวมมูลค่า</th>
-                            <th style="width: 8%;">จัดการ</th>
+                            <th style="width: 8%;">ต้นทุน/หน่วย</th>
+                            <th style="width: 8%;">มูลค่า/หน่วย</th>
+                            <th style="width: 10%;">รวมต้นทุน</th>
+                            <th style="width: 10%;">รวมมูลค่า</th>
+                            <th style="width: 6%;">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody style="font-size: 12px;">
-                        <tr><td colspan="9" class="text-center text-muted">เลือกใบขอและกด "ดึงรายการยา"</td></tr>
+                        <tr><td colspan="11" class="text-center text-muted">เลือกใบขอและกด "ดึงรายการยา"</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="summary-box">
                 <div class="row text-center">
-                    <div class="col-md-4 border-end">
-                        <div class="summary-label">จำนวนรายการทั้งหมด</div>
-                        <div class="summary-value" id="rec-count">0</div>
-                    </div>
-                    <div class="col-md-4 border-end">
-                        <div class="summary-label text-danger">ผลรวมต้นทุนใบรับนี้</div>
-                        <div class="summary-value text-danger" id="rec-total-cost">0.00</div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="summary-label text-primary">ผลรวมมูลค่าใบรับนี้</div>
-                        <div class="summary-value text-primary" id="rec-total-value">0.00</div>
-                    </div>
+                    <div class="col-md-4 border-end"><div class="summary-label">จำนวนรายการ</div><div class="summary-value" id="rec-count">0</div></div>
+                    <div class="col-md-4 border-end"><div class="summary-label text-danger">ผลรวมต้นทุน</div><div class="summary-value text-danger" id="rec-total-cost">0.00</div></div>
+                    <div class="col-md-4"><div class="summary-label text-primary">ผลรวมมูลค่า</div><div class="summary-value text-primary" id="rec-total-value">0.00</div></div>
                 </div>
             </div>
-
-            <div class="text-end border-top pt-3 mt-4"><button class="btn btn-success px-5" onclick="submitFulfill('save_receive', 'tableReceive', 'selReceiveDoc', 'dateReceive')">ยืนยันรับยาและบันทึกบัญชี</button></div>
+            <div class="text-end border-top pt-3 mt-4"><button class="btn btn-success px-5" onclick="submitFulfill('save_receive', 'tableReceive', 'selReceiveDoc', 'dateReceive')">ยืนยันรับยาเข้าคลัง</button></div>
         </div>
     </div>
 
@@ -176,7 +165,9 @@
 </div>
 
 <script>
+    // *** นำ URL ของ Apps Script มาวางที่นี่ ***
     const API = "https://script.google.com/macros/s/AKfycbzFuvpbNjRBmjVAtJQ1zUrBKXH1gK1Wf_S4INWfrFnsWkd1HCA0tCLmuOphGUOrxOrt/exec"; 
+    
     let db = { drugs:[], trades:[], companies:[] };
 
     window.onload = () => { 
@@ -268,131 +259,4 @@
                 list.forEach(d => html += `<option value="${d.doc_no}">${d.doc_no} (${d.department})</option>`);
                 sel.innerHTML = html;
             }
-        } catch(e) {}
-    }
-
-    async function searchDoc(apiPage, selectId, tableId, mode) {
-        const docNo = document.getElementById(selectId).value; const tbody = document.getElementById(tableId).querySelector('tbody');
-        if(!docNo) return alert("เลือกเอกสารก่อนครับ");
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center">กำลังดึงข้อมูล...</td></tr>';
-        try {
-            const res = await fetch(`${API}?page=${apiPage}&doc_no=${docNo}`); const items = await res.json();
-            tbody.innerHTML = "";
-            for(let i of items) {
-                const drug = db.drugs.find(d => d.internal_id === i.internal_id) || {};
-                const name = drug.generic_name + " " + (drug.strength||"");
-                if (mode === 'REC') {
-                    // กรองยี่ห้อที่สัมพันธ์กับยาหลัก
-                    const tradeOpts = db.trades.filter(t => t.internal_id === i.internal_id).map(t => `<option value="${t.trade_code}">${t.trade_name}</option>`).join('');
-                    const tr = document.createElement('tr'); tr.dataset.id = i.internal_id;
-                    tr.innerHTML = `
-                        <td class="fw-bold">${name}</td>
-                        <td><select class="form-select trd-code"><option value="">-- ระบุยี่ห้อ --</option>${tradeOpts}</select></td>
-                        <td><input type="number" class="form-control qty-field" value="${i.remain_qty}" oninput="calcRow(this)"></td>
-                        <td><input class="form-control lot-no mb-1" placeholder="Lot"><input type="date" class="form-control exp-date"></td>
-                        <td><input type="number" class="form-control cost-u" value="0" step="0.01" oninput="calcRow(this)"></td>
-                        <td><input type="number" class="form-control val-u" value="0" step="0.01" oninput="calcRow(this)"></td>
-                        <td><input class="form-control cost-t" readonly></td>
-                        <td><input class="form-control val-t" readonly></td>
-                        <td class="text-center"><button class="btn btn-sm btn-outline-primary" onclick="splitRecRow(this)">+ แยก</button></td>`;
-                    tbody.appendChild(tr);
-                    calcRow(tr.querySelector('.qty-field'));
-                } else if (mode === 'DISP') {
-                    await autoMapFEFO(tbody, i.internal_id, name, i.req_qty, i.already_qty, i.remain_qty);
-                }
-            }
-            if(mode === 'REC') updateGrandTotals();
-        } catch(e) {}
-    }
-
-    function calcRow(el) {
-        const row = el.closest('tr');
-        const qty = parseFloat(row.querySelector('.qty-field').value) || 0;
-        const costU = parseFloat(row.querySelector('.cost-u').value) || 0;
-        const valU = parseFloat(row.querySelector('.val-u').value) || 0;
-        row.querySelector('.cost-t').value = (qty * costU).toFixed(2);
-        row.querySelector('.val-t').value = (qty * valU).toFixed(2);
-        updateGrandTotals();
-    }
-
-    function updateGrandTotals() {
-        const tbody = document.getElementById('tableReceive').querySelector('tbody');
-        let count = 0, totalCost = 0, totalVal = 0;
-        for (let row of tbody.rows) {
-            if(!row.dataset.id) continue;
-            count++;
-            totalCost += parseFloat(row.querySelector('.cost-t').value) || 0;
-            totalVal += parseFloat(row.querySelector('.val-t').value) || 0;
-        }
-        document.getElementById('rec-count').innerText = count;
-        document.getElementById('rec-total-cost').innerText = totalCost.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('rec-total-value').innerText = totalVal.toLocaleString(undefined, {minimumFractionDigits: 2});
-    }
-
-    function splitRecRow(btn) {
-        const tr = btn.closest('tr'); const clone = tr.cloneNode(true);
-        clone.querySelector('.qty-field').value = 0; clone.querySelector('.lot-no').value = "";
-        clone.querySelector('td:nth-child(1)').innerHTML = '<span class="ms-3 text-muted">↳ (เพิ่ม Lot)</span>';
-        clone.querySelector('td:last-child').innerHTML = `<button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); updateGrandTotals();">ลบ</button>`;
-        tr.after(clone);
-        updateGrandTotals();
-    }
-
-    async function autoMapFEFO(tbody, internalId, drugName, reqQty, alreadyQty, remainQty) {
-        try {
-            const res = await fetch(`${API}?page=get_active_lots&internal_id=${internalId}`);
-            const lots = await res.json();
-            let remainToFill = remainQty;
-            for (let lot of lots) {
-                if (remainToFill <= 0) break;
-                let takeQty = Math.min(lot.qty, remainToFill);
-                const tr = document.createElement('tr'); tr.dataset.id = internalId;
-                tr.innerHTML = `<td class="fw-bold text-danger">${drugName}</td><td class="text-center">${reqQty}</td><td class="text-center">${alreadyQty}</td><td><input type="number" class="form-control rec-qty" value="${takeQty}"></td><td><input class="form-control lot-no bg-light" value="${lot.lot_no}" readonly></td><td><input class="form-control exp-date bg-light" value="${lot.exp_date}" readonly></td>`;
-                tbody.appendChild(tr);
-                remainToFill -= takeQty;
-            }
-        } catch (e) {}
-    }
-
-    async function submitFulfill(actionName, tableId, selectId, dateId) {
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        const docNo = document.getElementById(selectId).value;
-        const items = []; let valid = true;
-        for (let row of tbody.rows) {
-            if(!row.dataset.id) continue;
-            const qty = parseFloat(row.querySelector(actionName==='save_receive'?'.qty-field':'.rec-qty').value);
-            if (qty > 0) {
-                const item = { 
-                    internal_id: row.dataset.id, 
-                    qty: qty, 
-                    lot_no: row.querySelector('.lot-no').value 
-                };
-                if(actionName === 'save_receive') {
-                    item.trade_code = row.querySelector('.trd-code').value;
-                    item.exp_date = row.querySelector('.exp-date').value;
-                    item.cost_unit = row.querySelector('.cost-u').value;
-                    item.value_unit = row.querySelector('.val-u').value;
-                    item.total_cost = row.querySelector('.cost-t').value;
-                    item.total_value = row.querySelector('.val-t').value;
-                    if(!item.lot_no || !item.exp_date) { valid = false; break; }
-                }
-                items.push(item);
-            }
-        }
-        if(!valid || items.length === 0) return alert("ข้อมูลไม่ครบ");
-        const btn = event.target; btn.disabled = true;
-        try {
-            const payload = { action: actionName, payload: { ref_doc: docNo, doc_date: document.getElementById(dateId).value, items: items } };
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await res.json();
-            if (result.status === 'success') { alert("เรียบร้อย!"); tbody.innerHTML = ""; }
-        } catch(e) { alert("Error"); } finally { btn.disabled = false; }
-    }
-
-    function updateNelmSub(v) { const s = document.getElementById('nelm-sub'); if(!s) return; s.innerHTML=''; const o=(v==='ED')?['b','s','ex','R1','R2']:['Other']; o.forEach(x=>s.add(new Option(x,x))); }
-    async function saveMaster(e, a) { e.preventDefault(); const b=e.target.querySelector('button'); b.disabled=true; const p=Object.fromEntries(new FormData(e.target).entries());
-        try{ const r=await fetch(API,{method:'POST',body:JSON.stringify({action:a,payload:p})}); const j=await r.json(); if(j.status==='success'){alert("สำเร็จ!"); e.target.reset(); initData();} }catch(err){}finally{b.disabled=false;}
-    }
-</script>
-</body>
-</html>
+        } catch(e
